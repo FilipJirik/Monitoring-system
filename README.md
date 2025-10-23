@@ -1,5 +1,7 @@
 # Aplikace pro sběr, monitoring a vizualizaci dat počítačů a serverů
 
+---
+
 ## Popis projektu
 Tento projekt slouží k monitorování počítačů a serverů.  
 Zařízení odesílají data o svém stavu (např. využití CPU, RAM, disku) pomocí REST API na server, kde jsou údaje uloženy, vyhodnoceny a následně vizualizovány na webovém rozhraní.  
