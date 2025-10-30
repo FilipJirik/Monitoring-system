@@ -1,9 +1,12 @@
-package cz.jirikfi.monitoringsystembackend.entities;
+package cz.jirikfi.monitoringsystembackend.Entities;
 
+import cz.jirikfi.monitoringsystembackend.Services.GenerateUUIDService;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.sql.Timestamp;
+
+import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -12,16 +15,17 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "metrics")
 public class Metrics {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    @Builder.Default
+    private UUID id = GenerateUUIDService.v7();
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "device_id", nullable = false)
     private Device device;
 
-    private Timestamp timestamp;
+    @Builder.Default
+    private Instant timestamp = Instant.now();
 
     @Column(name = "cpu_usage")
     private Double cpuUsage;
@@ -34,4 +38,9 @@ public class Metrics {
 
     @Column(name = "network_usage")
     private Long networkUsage;
+
+    @Column(name = "gpu_usage")
+    private Double gpuUsage;
+
+    private Double battery;
 }
