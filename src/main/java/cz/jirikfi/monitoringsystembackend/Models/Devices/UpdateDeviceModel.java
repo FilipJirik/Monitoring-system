@@ -9,12 +9,11 @@ import lombok.Setter;
 
 import java.util.List;
 
-// DTO
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-// Only pick what you want to change, everything else stays as null
+
 public class UpdateDeviceModel {
 
     @Nullable
@@ -33,14 +32,14 @@ public class UpdateDeviceModel {
     private String description;
 
     @Nullable
-    private Long latitude;
+    private Double latitude;
 
     @Nullable
-    private Long longitude;
+    private Double longitude;
 
     @Nullable
     private String model;
 
     @Nullable
-    private Boolean sshEnabled = false;
+    private Boolean sshEnabled;
 }

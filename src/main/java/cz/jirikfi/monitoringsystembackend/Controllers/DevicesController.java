@@ -3,6 +3,7 @@ package cz.jirikfi.monitoringsystembackend.Controllers;
 
 import cz.jirikfi.monitoringsystembackend.Entities.Device;
 import cz.jirikfi.monitoringsystembackend.Entities.Metrics;
+import cz.jirikfi.monitoringsystembackend.Models.Devices.CreateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.UpdateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.Services.DeviceService;
 import cz.jirikfi.monitoringsystembackend.Services.MetricsService;
@@ -37,32 +38,20 @@ public class DevicesController {
 //        return ResponseEntity.status(HttpStatus.OK).body(deviceNames);
 //    }
 
-
-    ///
-    /// REPLACED BY 'POST /api/users/{userId}/devices' createDevice in UsersController
-    ///
-
-    // POST /api/devices
-//    @PostMapping("/create")
-//    public ResponseEntity<Device> createDevice(@Valid @RequestBody CreateDeviceModel model) {
-//        Device device = null;
-//        try{
-//            device = deviceService.createDevice(model);
-//
-//            if (device == null){
-//                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Device not found");
-//            }
-//        } catch (Exception e) {
-//            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-//        }
-//
-//        return ResponseEntity.status(HttpStatus.CREATED).body(device);
-//    }
-
     ///////////////////////////////////////////////////////////////////////////////////////
     /// ALL THESE ENDPOINTS NEED AUTHENTICATION THAT SENDER (USER) IS IN 'allowedUsers' ///
     ///////////////////////////////////////////////////////////////////////////////////////
 
+    // CRUD devices
+
+    // FIXME Need to return different model than <Device> - shows all info including passwords
+    // POST /api/devices createDevice
+    @PostMapping
+    public ResponseEntity<Device> createDevice(@RequestBody @Valid CreateDeviceModel model) {
+        Device device = deviceService.createDevice( model);
+
+        return ResponseEntity.ok().body(device);
+    }
     // GET /api/devices/{id} getDevice
     @GetMapping("/{id}")
     public ResponseEntity<Device> getDevice(@PathVariable UUID id) {
@@ -98,8 +87,4 @@ public class DevicesController {
         List<Metrics> metrics = metricsService.getMetrics(id);
         return ResponseEntity.ok().body(metrics);
     }
-
-
-
-
 }

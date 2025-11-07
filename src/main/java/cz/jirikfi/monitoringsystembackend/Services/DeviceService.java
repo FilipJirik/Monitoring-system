@@ -2,32 +2,32 @@ package cz.jirikfi.monitoringsystembackend.Services;
 
 import cz.jirikfi.monitoringsystembackend.Entities.Device;
 import cz.jirikfi.monitoringsystembackend.Entities.Picture;
-import cz.jirikfi.monitoringsystembackend.Exceptions.BadRequestException;
 import cz.jirikfi.monitoringsystembackend.Exceptions.InternalErrorException;
 import cz.jirikfi.monitoringsystembackend.Exceptions.NotFoundException;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.CreateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.UpdateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.Repositories.DeviceRepository;
 import cz.jirikfi.monitoringsystembackend.Repositories.PictureRepository;
-import jakarta.persistence.EntityNotFoundException;
+import cz.jirikfi.monitoringsystembackend.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 
 @Service
 public class DeviceService {
 
     @Autowired
-    private DeviceRepository deviceDatabase;
+    private DeviceRepository deviceRepository;
     @Autowired
-    private PictureRepository pictureDatabase;
+    private PictureRepository pictureRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     public Device getDevice(UUID id) {
-        return deviceDatabase.findById(id).orElseThrow(() ->
+        return deviceRepository.findById(id).orElseThrow(() ->
                 new NotFoundException("Device with id " + id + " not found"));
     }
 
@@ -71,32 +71,57 @@ public class DeviceService {
                 .data(data)
                 .build();
 
-        pictureDatabase.save(pictureModel);
+        pictureRepository.save(pictureModel);
 
         device.setPicture(pictureModel);
-        deviceDatabase.save(device);
+        deviceRepository.save(device);
         return device;
     }
 
-    public Device updateDevice(UUID id, UpdateDeviceModel model) {
+    public Device createDevice(CreateDeviceModel model) {
+
+        if (!userRepository.existsById(model.getUserId())) {
+            throw new NotFoundException("User with id " + model.getUserId() + " not found");
+        }
+
+        Device device = new Device();
+        SetValuesIfNotNull(device, model.getName(), model.getOperatingSystem(),
+                model.getIpAddress(), model.getMacAddress(), model.getDescription(),
+                model.getLatitude(), model.getLongitude(), model.getModel(),
+                model.getSshEnabled());
+
+        deviceRepository.save(device);
+        return device;
+    } // TODO: GENERATE API KEY
+
+
+    public Device updateDevice(UUID id, UpdateDeviceModel model)
+    {
         Device device = getDevice(id);
 
-        if (model.getName() != null) device.setName(model.getName());
-        if (model.getOperatingSystem() != null) device.setOperatingSystem(model.getOperatingSystem());
-        if (model.getIpAddress() != null) device.setIpAddress(model.getIpAddress());
-        if (model.getMacAddress() != null) device.setMacAddress(model.getMacAddress());
-        if (model.getDescription() != null) device.setDescription(model.getDescription());
-        if (model.getLatitude() != null) device.setLatitude(model.getLatitude());
-        if (model.getLongitude() != null) device.setLongitude(model.getLongitude());
-        if (model.getModel() != null) device.setModel(model.getModel());
-        if (model.getSshEnabled() != null) device.setSshEnabled(model.getSshEnabled());
+        SetValuesIfNotNull(device, model.getName(), model.getOperatingSystem(),
+                model.getIpAddress(), model.getMacAddress(), model.getDescription(),
+                model.getLatitude(), model.getLongitude(), model.getModel(),
+                model.getSshEnabled());
 
-        deviceDatabase.save(device);
+        deviceRepository.save(device);
         return device;
     }
 
     public void deleteDevice(UUID id) {
         Device device = getDevice(id);
-        deviceDatabase.delete(device);
+        deviceRepository.delete(device);
+    }
+
+    private void SetValuesIfNotNull(Device device, String name, String operatingSystem, String ipAddress, String macAddress, String description, Double latitude, Double longitude, String model2, Boolean sshEnabled) {
+        if (name != null) device.setName(name);
+        if (operatingSystem != null) device.setOperatingSystem(operatingSystem);
+        if (ipAddress != null) device.setIpAddress(ipAddress);
+        if (macAddress != null) device.setMacAddress(macAddress);
+        if (description != null) device.setDescription(description);
+        if (latitude != null) device.setLatitude(latitude);
+        if (longitude != null) device.setLongitude(longitude);
+        if (model2 != null) device.setModel(model2);
+        if (sshEnabled != null) device.setSshEnabled(sshEnabled);
     }
 }

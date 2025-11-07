@@ -2,9 +2,12 @@ package cz.jirikfi.monitoringsystembackend.Controllers;
 
 import cz.jirikfi.monitoringsystembackend.Entities.Device;
 import cz.jirikfi.monitoringsystembackend.Entities.User;
-import cz.jirikfi.monitoringsystembackend.Models.Devices.CreateDeviceModel;
+import cz.jirikfi.monitoringsystembackend.Entities.UserDeviceAccess;
+import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceResponse;
+import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.CreatePermissionRequest;
+import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.UpdatePermissionRequest;
 import cz.jirikfi.monitoringsystembackend.Models.Users.CreateUserModel;
-import cz.jirikfi.monitoringsystembackend.Models.Users.GetUserModel;
+import cz.jirikfi.monitoringsystembackend.Models.Users.UserResponse;
 import cz.jirikfi.monitoringsystembackend.Models.Users.UpdateUserModel;
 import cz.jirikfi.monitoringsystembackend.Services.UserService;
 
@@ -49,13 +52,36 @@ public class UsersController {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+    // GET /api/users?keyword=
+    // Get All Users based on query ->
+    // keyword - search in names and emails!
+    // use: for adding users when looking for contact emails for device
+    @GetMapping
+    public ResponseEntity<List<UserResponse>> getUsersByKeyword(@RequestParam String keyword) {
+        List<UserResponse> users = userService.getUsersByKeyword(keyword);
+
+        if (users.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok().body(users);
+    }
 
     // Access for users to see and work with devices
+
     // POST /api/users/{userId}/devices/{deviceId} grantAccessForDeviceToUser
     @PostMapping("/{userId}/devices/{deviceId}")
-    public ResponseEntity grantAccessForDeviceToUser(@PathVariable UUID userId, @PathVariable UUID deviceId) {
-        userService.grantAccess(userId, deviceId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<UserDeviceAccess> grantAccessForDeviceToUser(@PathVariable UUID userId, @PathVariable UUID deviceId,
+                                                     @RequestBody @Valid CreatePermissionRequest model) {
+        UserDeviceAccess UserDeviceAccess = userService.grantAccess(userId, deviceId, model);
+        return ResponseEntity.ok().body(UserDeviceAccess);
+    }
+
+    // UPDATE /api/users/{userId}/devices/{deviceId} updatePermissions
+    @PutMapping("/{userId}/devices/{deviceId}")
+    public ResponseEntity<UserDeviceAccess> updatePermissions(@PathVariable UUID userId, @PathVariable UUID deviceId,
+                                                              @RequestBody @Valid UpdatePermissionRequest model) {
+        UserDeviceAccess UserDeviceAccess = userService.changePermission(userId, deviceId, model);
+        return ResponseEntity.ok().body(UserDeviceAccess);
     }
 
     // DELETE /api/users/{userId}/devices/{deviceId} revokeAccessForDeviceToUser
@@ -65,33 +91,22 @@ public class UsersController {
         return ResponseEntity.noContent().build();
     }
 
-    // POST /api/users/{userId}/devices createDevice
-    @PostMapping("/{userId}/device")
-    public ResponseEntity<Device> createDevice(@PathVariable UUID userId, @RequestBody @Valid CreateDeviceModel model) {
-        Device device = userService.createDevice(userId, model);
-        return ResponseEntity.ok().body(device);
-    }
+    // Users devices
 
     // GET /api/users/{userId}/devices getUserDevices
+//    @GetMapping("/{userId}/devices")
+//    public ResponseEntity<List<Device>> getUserDevices(@PathVariable UUID userId) {
+//        List<Device> devices = userService.getUserDevices(userId);
+//        return ResponseEntity.ok().body(devices);
+//    }
+
+    // GET /api/users/{userId}/devices?keyword=
     @GetMapping("/{userId}/devices")
-    public ResponseEntity<List<Device>> getUserDevices(@PathVariable UUID userId) {
-        List<Device> devices = userService.getUserDevices(userId);
+    public ResponseEntity<List<DeviceResponse>> getUserDevicesByKeyword(@PathVariable UUID userId, @RequestParam String keyword) {
+        List<DeviceResponse> devices = userService.getUserDevicesByKeyword(userId, keyword);
         return ResponseEntity.ok().body(devices);
     }
 
 
-    // GET /api/users?keyword=
-    // Get All Users based on query ->
-    // keyword - search in names and emails!
-    // use: for adding users when looking for contact emails for device
-    @GetMapping
-    public ResponseEntity<List<GetUserModel>> getUsersByKeyword(@RequestParam String keyword) {
-        List<GetUserModel> users = userService.getUsersByKeyword(keyword);
-
-        if (users.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok().body(users);
-    }
 
 }

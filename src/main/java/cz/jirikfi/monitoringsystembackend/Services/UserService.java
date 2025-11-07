@@ -2,36 +2,41 @@ package cz.jirikfi.monitoringsystembackend.Services;
 
 import cz.jirikfi.monitoringsystembackend.Entities.Device;
 import cz.jirikfi.monitoringsystembackend.Entities.User;
+import cz.jirikfi.monitoringsystembackend.Entities.UserDeviceAccess;
+import cz.jirikfi.monitoringsystembackend.Exceptions.BadRequestException;
 import cz.jirikfi.monitoringsystembackend.Exceptions.NotFoundException;
-import cz.jirikfi.monitoringsystembackend.Models.Devices.CreateDeviceModel;
+import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceResponse;
+import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.CreatePermissionRequest;
+import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.UpdatePermissionRequest;
 import cz.jirikfi.monitoringsystembackend.Models.Users.CreateUserModel;
-import cz.jirikfi.monitoringsystembackend.Models.Users.GetUserModel;
+import cz.jirikfi.monitoringsystembackend.Models.Users.UserResponse;
 import cz.jirikfi.monitoringsystembackend.Models.Users.UpdateUserModel;
 import cz.jirikfi.monitoringsystembackend.Repositories.DeviceRepository;
+import cz.jirikfi.monitoringsystembackend.Repositories.UserDeviceAccessRepository;
 import cz.jirikfi.monitoringsystembackend.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
+
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class UserService {
     @Autowired
-    private DeviceRepository deviceDatabase;
+    private UserDeviceAccessRepository userDeviceAccessRepository;
     @Autowired
-    private UserRepository userDatabase;
+    private UserRepository userRepository;
     @Autowired
-    private PictureService pictureService;
+    private DeviceRepository deviceRepository;
 
     public User getUser(UUID id) {
-        return userDatabase.findById(id).orElseThrow(() ->
+        return userRepository.findById(id).orElseThrow(() ->
                 new NotFoundException("User with id " + id + " not found"));
     }
 
     public Device getDevice(UUID id) {
-        return deviceDatabase.findById(id).orElseThrow(() ->
+        return deviceRepository.findById(id).orElseThrow(() ->
                 new NotFoundException("Device with id " + id + " not found"));
     }
 
@@ -42,7 +47,7 @@ public class UserService {
              .password(model.getPassword())
              .build();
 
-        userDatabase.save(user);
+        userRepository.save(user);
         return user;
     }
 
@@ -53,63 +58,91 @@ public class UserService {
         if (model.getEmail() != null) user.setEmail(model.getEmail());
         if (model.getPassword() != null) user.setPassword(model.getPassword());
 
-        userDatabase.save(user);
+        userRepository.save(user);
 
         return user;
     }
     public void deleteUser(UUID id) {
         User user = getUser(id);
-        userDatabase.delete(user);
+        userRepository.delete(user);
     }
 
-    public void grantAccess(UUID userId, UUID deviceId) {
+    public UserDeviceAccess grantAccess(UUID userId, UUID deviceId, CreatePermissionRequest model) {
         User user = getUser(userId);
         Device device = getDevice(deviceId);
 
-        user.getAccessibleDevices().add(device);
+        UserDeviceAccess userDeviceAccess = UserDeviceAccess.builder()
+                .device(device)
+                .user(user)
+                .permissionLevel(model.getPermissionLevel())
+                .build();
+
+        userDeviceAccessRepository.save(userDeviceAccess);
+        return userDeviceAccess;
     }
 
     public void revokeAccess(UUID userId, UUID deviceId) {
-        User user = getUser(userId);
-        Device device = getDevice(deviceId);
+        UserDeviceAccess userDeviceAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId);
 
-        user.getAccessibleDevices().remove(device);
+        if (userDeviceAccess == null){
+            throw new BadRequestException("User " + userId + " doesn't have access to device " + deviceId);
+        }
+        userDeviceAccessRepository.delete(userDeviceAccess);
     }
 
-    public Device createDevice(UUID userId, CreateDeviceModel model) {
-        User user = getUser(userId);
+    public UserDeviceAccess changePermission(UUID userId, UUID deviceId, UpdatePermissionRequest model) {
+        UserDeviceAccess userDeviceAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId);
 
-        Device device = Device.builder()
-                .name(model.getName())
-                .operatingSystem(model.getOperatingSystem())
-                .ipAddress(model.getIpAddress())
-                .macAddress(model.getMacAddress())
-                .description(model.getDescription())
-                .latitude(model.getLatitude())
-                .longitude(model.getLongitude())
-                .model(model.getModel())
-                .sshEnabled(model.getSshEnabled())
-                .allowedUsers(new HashSet<>() )
-                .owner(user)
-                .picture(pictureService.getDefaultPicture())
-                .build();
+        if (userDeviceAccess == null){
+            throw new BadRequestException("User " + userId + " doesn't have access to device " + deviceId);
+        }
+        userDeviceAccess.setPermissionLevel(model.getPermissionLevel());
+        userDeviceAccessRepository.save(userDeviceAccess);
 
-        device.getAllowedUsers().add(user); // owner has rights to access device
-
-        deviceDatabase.save(device);
-        return device;
+        return userDeviceAccess;
     }
+
+//    public Device createDevice(UUID userId, CreateDeviceModel model) {
+//        User user = getUser(userId);
+//
+//        Device device = Device.builder()
+//                .name(model.getName())
+//                .operatingSystem(model.getOperatingSystem())
+//                .ipAddress(model.getIpAddress())
+//                .macAddress(model.getMacAddress())
+//                .description(model.getDescription())
+//                .latitude(model.getLatitude())
+//                .longitude(model.getLongitude())
+//                .model(model.getModel())
+//                .sshEnabled(model.getSshEnabled())
+//                .allowedUsers(new HashSet<>() )
+//                .owner(user)
+//                .picture(pictureService.getDefaultPicture())
+//                .build();
+//
+//        device.getAllowedUsers().add(user); // owner has rights to access device
+//
+//        deviceDatabase.save(device);
+//        return device;
+//    }
 
     public List<Device> getUserDevices(UUID userId) {
-        User user = getUser(userId);
-        return user.getAccessibleDevices().stream().toList();
+        List<Device> devices = deviceRepository.findDevicesByUserAccess(userId);
+        return devices;
+    }
+    public List<DeviceResponse> getUserDevicesByKeyword(UUID userId, String keyword) {
+        List<Device> devices = deviceRepository.findDevicesByUserAccessKeyword(userId, keyword);
+
+        return devices.stream()
+                .map(d -> new DeviceResponse(d.getName(), d.getLastSeen()))
+                .toList();
     }
 
-    public List<GetUserModel> getUsersByKeyword(String keyword) {
-        List<User> users = userDatabase.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(keyword, keyword);
+    public List<UserResponse> getUsersByKeyword(String keyword) {
+        List<User> users = userRepository.findUsersByKeyword(keyword);
 
         return users.stream()
-                .map(u -> new GetUserModel(u.getUsername(), u.getEmail()))
+                .map(u -> new UserResponse(u.getUsername(), u.getEmail()))
                 .toList();
     }
 

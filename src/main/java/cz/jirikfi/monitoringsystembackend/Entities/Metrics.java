@@ -1,5 +1,6 @@
 package cz.jirikfi.monitoringsystembackend.Entities;
 
+import cz.jirikfi.monitoringsystembackend.Entities.Enums.MetricStatus;
 import cz.jirikfi.monitoringsystembackend.Services.GenerateUUIDService;
 import jakarta.persistence.*;
 import lombok.*;
@@ -16,7 +17,6 @@ import java.util.UUID;
 @Table(name = "metrics")
 public class Metrics {
     @Id
-    @GeneratedValue
     @Builder.Default
     private UUID id = GenerateUUIDService.v7();
 
@@ -33,14 +33,32 @@ public class Metrics {
     @Column(name = "ram_usage")
     private Double ramUsage;
 
+    @Column(name = "ram_total_mb")
+    private Long ramTotalMb;
+
     @Column(name = "disk_usage")
     private Double diskUsage;
 
-    @Column(name = "network_usage")
-    private Long networkUsage;
+    @Column(name = "disk_total_gb")
+    private Long diskTotalGb;
+
+    @Column(name = "network_in_bytes")
+    private Long networkInBytes;
+
+    @Column(name = "network_out_bytes")
+    private Long networkOutBytes;
 
     @Column(name = "gpu_usage")
     private Double gpuUsage;
 
     private Double battery;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(length = 20)
+    private MetricStatus status = MetricStatus.OK;
+
+    @Builder.Default
+    @Column(name = "created_at")
+    private Instant createdAt = Instant.now();
 }

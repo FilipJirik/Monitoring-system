@@ -1,6 +1,5 @@
 package cz.jirikfi.monitoringsystembackend.Models.Users;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
@@ -13,7 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class GetUserModel {
+public class UserResponse {
     @NotEmpty
     public String username;
 

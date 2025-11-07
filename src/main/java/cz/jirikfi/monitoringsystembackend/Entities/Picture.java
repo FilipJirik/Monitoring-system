@@ -30,4 +30,9 @@ public class Picture {
     @JdbcTypeCode(SqlTypes.BINARY)
     @Column(columnDefinition = "bytea",  nullable = false)
     private byte[] data;
+
+    @Column(name = "content_type", length = 50)
+    @Builder.Default
+    private String contentType = "image/png";
+
 }

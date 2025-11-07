@@ -11,6 +11,7 @@ import lombok.*;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 // DTO
 @AllArgsConstructor
@@ -19,6 +20,8 @@ import java.util.Set;
 @Setter
 @Builder
 public class CreateDeviceModel {
+    @NotNull
+    private UUID userId;
 
     @NotEmpty
     private String name;
@@ -36,10 +39,10 @@ public class CreateDeviceModel {
     private String description;
 
     @Nullable
-    private Long latitude;
+    private Double latitude;
 
     @Nullable
-    private Long longitude;
+    private Double longitude;
 
     @Nullable
     private String model;

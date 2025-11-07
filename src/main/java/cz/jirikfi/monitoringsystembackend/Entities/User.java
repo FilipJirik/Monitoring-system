@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,14 +34,26 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @ManyToMany
-    @JoinTable(
-            name = "user_device_access",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "device_id")
-    )
-    private Set<Device> accessibleDevices = new HashSet<>();
+    @Column(name = "created_at")
+    @Builder.Default
+    private Instant createdAt =  Instant.now();
 
+    @Column(name = "last_login")
+    private Instant lastLogin;
 
-    // TODO: Inbox for notification
+    @OneToMany(mappedBy = "owner")
+    @Builder.Default
+    private Set<Device> ownedDevices = new HashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    @Builder.Default
+    private Set<UserDeviceAccess> deviceAccesses = new HashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    @Builder.Default
+    private Set<AlertRecipient> alertRecipients = new HashSet<>();
+
+    @OneToMany(mappedBy = "resolvedBy")
+    @Builder.Default
+    private Set<Alert> resolvedAlerts = new HashSet<>();
 }
