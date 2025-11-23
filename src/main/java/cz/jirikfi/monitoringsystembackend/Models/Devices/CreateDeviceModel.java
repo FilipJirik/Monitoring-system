@@ -20,9 +20,6 @@ import java.util.UUID;
 @Setter
 @Builder
 public class CreateDeviceModel {
-    @NotNull
-    private UUID userId;
-
     @NotEmpty
     private String name;
 

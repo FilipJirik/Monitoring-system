@@ -32,8 +32,8 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
-    @ExceptionHandler(UnathorizedException.class)
-    public ResponseEntity<ApiErrorMessage> handleUnauthorized(UnathorizedException ex, HttpServletRequest request) {
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiErrorMessage> handleUnauthorized(UnauthorizedException ex, HttpServletRequest request) {
         ApiErrorMessage error = new ApiErrorMessage(
                 HttpStatus.UNAUTHORIZED.value(),
                 "Unauthorized",
@@ -52,6 +52,17 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiErrorMessage> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
+        ApiErrorMessage error = new ApiErrorMessage(
+                HttpStatus.FORBIDDEN.value(),
+                "Forbidden",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

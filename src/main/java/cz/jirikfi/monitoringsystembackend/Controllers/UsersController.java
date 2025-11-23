@@ -1,9 +1,8 @@
 package cz.jirikfi.monitoringsystembackend.Controllers;
 
-import cz.jirikfi.monitoringsystembackend.Entities.Device;
 import cz.jirikfi.monitoringsystembackend.Entities.User;
 import cz.jirikfi.monitoringsystembackend.Entities.UserDeviceAccess;
-import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceResponse;
+import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceInfo;
 import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.CreatePermissionRequest;
 import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.UpdatePermissionRequest;
 import cz.jirikfi.monitoringsystembackend.Models.Users.CreateUserModel;
@@ -102,8 +101,8 @@ public class UsersController {
 
     // GET /api/users/{userId}/devices?keyword=
     @GetMapping("/{userId}/devices")
-    public ResponseEntity<List<DeviceResponse>> getUserDevicesByKeyword(@PathVariable UUID userId, @RequestParam String keyword) {
-        List<DeviceResponse> devices = userService.getUserDevicesByKeyword(userId, keyword);
+    public ResponseEntity<List<DeviceInfo>> getUserDevicesByKeyword(@PathVariable UUID userId, @RequestParam String keyword) {
+        List<DeviceInfo> devices = userService.getUserDevicesByKeyword(userId, keyword);
         return ResponseEntity.ok().body(devices);
     }
 

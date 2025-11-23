@@ -5,7 +5,7 @@ import cz.jirikfi.monitoringsystembackend.Entities.User;
 import cz.jirikfi.monitoringsystembackend.Entities.UserDeviceAccess;
 import cz.jirikfi.monitoringsystembackend.Exceptions.BadRequestException;
 import cz.jirikfi.monitoringsystembackend.Exceptions.NotFoundException;
-import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceResponse;
+import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceInfo;
 import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.CreatePermissionRequest;
 import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.UpdatePermissionRequest;
 import cz.jirikfi.monitoringsystembackend.Models.Users.CreateUserModel;
@@ -130,11 +130,11 @@ public class UserService {
         List<Device> devices = deviceRepository.findDevicesByUserAccess(userId);
         return devices;
     }
-    public List<DeviceResponse> getUserDevicesByKeyword(UUID userId, String keyword) {
+    public List<DeviceInfo> getUserDevicesByKeyword(UUID userId, String keyword) {
         List<Device> devices = deviceRepository.findDevicesByUserAccessKeyword(userId, keyword);
 
         return devices.stream()
-                .map(d -> new DeviceResponse(d.getName(), d.getLastSeen()))
+                .map(d -> new DeviceInfo(d.getName(), d.getLastSeen()))
                 .toList();
     }
 
