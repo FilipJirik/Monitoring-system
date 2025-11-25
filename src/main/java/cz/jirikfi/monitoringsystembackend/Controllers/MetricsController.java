@@ -1,13 +1,20 @@
 package cz.jirikfi.monitoringsystembackend.Controllers;
 
+import cz.jirikfi.monitoringsystembackend.Entities.Metrics;
 import cz.jirikfi.monitoringsystembackend.Services.DeviceService;
 import cz.jirikfi.monitoringsystembackend.Services.MetricsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.UUID;
+
 @RestController
-@RequestMapping("/api/metrics")
+@RequestMapping("/api/devices/{id}/metrics}")
 public class MetricsController {
     @Autowired
     private MetricsService metricsService;
@@ -19,6 +26,10 @@ public class MetricsController {
     // most used endpoint
     // check if values are below threshold
 
+//    @PostMapping
+//    public ResponseEntity<List<Metrics>> getMetrics(@PathVariable UUID id) {
+//
+//    } // TODO
 
     /// GETs
 

@@ -41,7 +41,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfig()))
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Open endpoints
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll() // Open endpoints
                         .anyRequest().authenticated()
                 )
 

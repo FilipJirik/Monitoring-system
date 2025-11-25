@@ -19,15 +19,19 @@ public class OpenApiConfig {
                         .version("1.0")
                         .description("API pro monitoring počítačů a serverů"))
                 .addSecurityItem(new SecurityRequirement()
-                        .addList("API Key")
-                        .addList("Basic Auth"))
+                        .addList("BearerAuth")
+                        .addList("API Key"))
                 .components(new Components()
-                        .addSecuritySchemes("API Key", new SecurityScheme()
-                                .type(SecurityScheme.Type.APIKEY)
-                                .in(SecurityScheme.In.HEADER)
-                                .name("X-API-Key"))
-                        .addSecuritySchemes("Basic Auth", new SecurityScheme()
-                                .type(SecurityScheme.Type.HTTP)
-                                .scheme("basic")));
+                        .addSecuritySchemes("BearerAuth",
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT"))
+                        .addSecuritySchemes("API Key",
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.APIKEY)
+                                        .in(SecurityScheme.In.HEADER)
+                                        .name("X-API-Key"))
+                );
     }
 }

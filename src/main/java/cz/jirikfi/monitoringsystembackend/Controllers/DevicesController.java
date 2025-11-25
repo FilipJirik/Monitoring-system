@@ -11,6 +11,7 @@ import cz.jirikfi.monitoringsystembackend.Services.DeviceService;
 import cz.jirikfi.monitoringsystembackend.Services.MetricsService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +40,7 @@ public class DevicesController {
             @AuthenticationPrincipal UUID userId) {
         DeviceResponse device = deviceService.createDevice(userId, model);
 
-        return ResponseEntity.ok().body(device);
+        return ResponseEntity.status(HttpStatus.CREATED).body(device);
     }
     // GET /api/devices/{id} getDevice
     @GetMapping("/{id}")
@@ -52,7 +53,6 @@ public class DevicesController {
         DeviceResponse device = deviceService.getDevice(id);
         return ResponseEntity.ok().body(device);
     }
-
     // PUT /api/devices/{id} updateDevice
     @PutMapping("/{id}")
     public ResponseEntity<DeviceResponse> updateDevice(
@@ -65,7 +65,6 @@ public class DevicesController {
         DeviceResponse device = deviceService.updateDevice(id, model);
         return ResponseEntity.ok().body(device);
     }
-
     // DELETE /api/devices/{id} deleteDevice
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteDevice(
@@ -90,7 +89,7 @@ public class DevicesController {
         DeviceResponse device = deviceService.changePicture(id, picture);
         return ResponseEntity.ok().body(device);
     }
-
+    // POST /{id}/regenerate-api-key Regenate current api key
     @PostMapping("/{id}/regenerate-api-key")
     public ResponseEntity<String> regenerateApiKey(
             @PathVariable UUID id,
@@ -101,6 +100,17 @@ public class DevicesController {
         String newApiKey = deviceService.regenerateApiKey(id);
         return ResponseEntity.ok(newApiKey);
     }
+    // GET /api/devices GET all user's devices
+//    @GetMapping
+//    public ResponseEntity<DeviceResponse> getAllDevices(
+//            @AuthenticationPrincipal UUID userId) {
+//
+//        authorizationService.checkDeviceAccess(userId, id);
+//
+//        DeviceResponse device = deviceService.getDevice(id);
+//        return ResponseEntity.ok().body(device);
+//    } // TODO
+
 
     // Metrics
     // GET /devices/{id}/metrics  GET all metrics of device

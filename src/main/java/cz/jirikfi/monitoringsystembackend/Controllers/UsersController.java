@@ -31,7 +31,7 @@ public class UsersController {
     @PostMapping
     public ResponseEntity<User> addUser(@RequestBody @Valid CreateUserModel model) {
         User user = userService.createUser(model);
-        return ResponseEntity.status(HttpStatus.OK).body(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
     // Read
     @GetMapping("/{id}")
