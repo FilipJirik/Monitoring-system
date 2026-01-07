@@ -17,7 +17,7 @@ public class RegisterModel {
     @Size(min = 3, max = 50)
     String username;
 
-    @NotBlank()
+    @NotBlank
     @Size(min = 8)
     String password;
 

@@ -3,6 +3,7 @@ package cz.jirikfi.monitoringsystembackend.Mappers;
 import cz.jirikfi.monitoringsystembackend.Entities.Device;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.CreateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceResponse;
+import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceWithApiKeyModel;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.UpdateDeviceModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,23 +15,45 @@ import java.time.Instant;
 public class DeviceMapper {
     public DeviceResponse toResponse(Device device) {
         return DeviceResponse.builder()
-        .Id(device.getId())
-        .Name(device.getName())
-        .OperatingSystem(device.getOperatingSystem())
-        .IpAddress(device.getIpAddress())
-        .MacAddress(device.getMacAddress())
-        .Description(device.getDescription())
-        .Latitude(device.getLatitude())
-        .Longitude(device.getLongitude())
-        .Model(device.getModel())
-        .SshEnabled(device.getSshEnabled())
-        .LastSeen(device.getLastSeen())
-        .CreatedAt(device.getCreatedAt())
-        .UpdatedAt(device.getUpdatedAt())
-        .OwnerId(device.getOwner().getId())
-        .OwnerUsername(device.getOwner().getUsername())
-        .PictureId(device.getPicture().getId())
+        .id(device.getId())
+        .name(device.getName())
+        .operatingSystem(device.getOperatingSystem())
+        .ipAddress(device.getIpAddress())
+        .macAddress(device.getMacAddress())
+        .description(device.getDescription())
+        .latitude(device.getLatitude())
+        .longitude(device.getLongitude())
+        .model(device.getModel())
+        .sshEnabled(device.getSshEnabled())
+        .lastSeen(device.getLastSeen())
+        .createdAt(device.getCreatedAt())
+        .updatedAt(device.getUpdatedAt())
+        .ownerId(device.getOwner().getId())
+        .ownerUsername(device.getOwner().getUsername())
+        .pictureId(device.getPicture().getId())
         .build();
+    }
+
+    public DeviceWithApiKeyModel toModelWithApiKey(Device device) {
+        return DeviceWithApiKeyModel.builder()
+                .id(device.getId())
+                .name(device.getName())
+                .operatingSystem(device.getOperatingSystem())
+                .ipAddress(device.getIpAddress())
+                .macAddress(device.getMacAddress())
+                .description(device.getDescription())
+                .latitude(device.getLatitude())
+                .longitude(device.getLongitude())
+                .model(device.getModel())
+                .sshEnabled(device.getSshEnabled())
+                .lastSeen(device.getLastSeen())
+                .createdAt(device.getCreatedAt())
+                .updatedAt(device.getUpdatedAt())
+                .ownerId(device.getOwner().getId())
+                .ownerUsername(device.getOwner().getUsername())
+                .pictureId(device.getPicture().getId())
+                .apiKey(device.getApiKey())
+                .build();
     }
 
     public Device createToEntity(CreateDeviceModel model) {

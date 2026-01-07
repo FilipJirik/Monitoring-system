@@ -1,41 +1,62 @@
 package cz.jirikfi.monitoringsystembackend.Controllers;
 
-import cz.jirikfi.monitoringsystembackend.Entities.Metrics;
-import cz.jirikfi.monitoringsystembackend.Services.DeviceService;
+import cz.jirikfi.monitoringsystembackend.Entities.User;
+import cz.jirikfi.monitoringsystembackend.Models.Metrics.MetricsModel;
+import cz.jirikfi.monitoringsystembackend.Services.AuthorizationService;
 import cz.jirikfi.monitoringsystembackend.Services.MetricsService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/devices/{id}/metrics}")
+@RequestMapping("/api/devices/{deviceId}/metrics")
+@RequiredArgsConstructor
 public class MetricsController {
-    @Autowired
-    private MetricsService metricsService;
 
-    // FIXME: Probably need to change to only call devices that have metrics not individual metrics database!!!!!!!!!!!!!!
-    // FIXME: Need to JOIN between Device and Metrics
+    private final MetricsService metricsService;
+    private final AuthorizationService authorizationService;
 
-    // POST /api/devices/{id}/latestMetrics
-    // most used endpoint
-    // check if values are below threshold
+    private static final String API_KEY_HEADER = "X-API-KEY";
 
-//    @PostMapping
-//    public ResponseEntity<List<Metrics>> getMetrics(@PathVariable UUID id) {
-//
-//    } // TODO
+    @PostMapping
+    public ResponseEntity<?> receiveMetrics(
+            @PathVariable UUID deviceId,
+            @RequestHeader(API_KEY_HEADER) String apiKey,
+            @Valid @RequestBody MetricsModel model) {
 
-    /// GETs
+        metricsService.saveMetrics(deviceId, apiKey, model);
+        return ResponseEntity.ok().build();
+    }
 
-    // GET /api/devices/{id}/allMetrics
-    // get all metrics by device id
-    // -> for longterm graphs for all of properties
+    @GetMapping
+    public ResponseEntity<Slice<MetricsModel>> getMetricsHistory(
+            @PathVariable UUID deviceId,
+            @AuthenticationPrincipal User user,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "100") int size) {
+
+        authorizationService.checkDeviceAccess(user.getId(), deviceId);
+
+        Slice<MetricsModel> metrics = metricsService.getMetricsHistory(deviceId, PageRequest.of(page, size));
+        return ResponseEntity.ok(metrics);
+    }
+
+    @GetMapping("/latest")
+    public ResponseEntity<MetricsModel> getLatestMetrics(
+            @PathVariable UUID deviceId,
+            @AuthenticationPrincipal User user) {
+
+        authorizationService.checkDeviceAccess(user.getId(), deviceId);
+
+        MetricsModel latest = metricsService.getLatestMetrics(deviceId);
+        return ResponseEntity.ok(latest);
+    }
 
     // GET /api/devices/{id}/getAll/cpu
     // GET /api/devices/{id}/getAll/{RAM|CPU|GPU|NETWORK|DISK|BATTERY}
@@ -43,7 +64,4 @@ public class MetricsController {
     // -> for single longterm graphs
 
     // USER can choose from modes like (AVERAGE OF DAY, WEEK, OF MONTH) to make average of old records
-
-
-
 }

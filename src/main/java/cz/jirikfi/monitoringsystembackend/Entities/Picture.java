@@ -2,20 +2,19 @@ package cz.jirikfi.monitoringsystembackend.Entities;
 
 import cz.jirikfi.monitoringsystembackend.Services.GenerateUUIDService;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
 @Builder
-@Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
 @Table(name = "pictures")
 public class Picture {
 

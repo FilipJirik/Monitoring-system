@@ -1,64 +1,56 @@
 package cz.jirikfi.monitoringsystembackend.Entities;
 
-import cz.jirikfi.monitoringsystembackend.Entities.Enums.MetricStatus;
 import cz.jirikfi.monitoringsystembackend.Services.GenerateUUIDService;
 import jakarta.persistence.*;
 import lombok.*;
 
-
 import java.time.Instant;
 import java.util.UUID;
 
-@Data
+@Entity
+@Table(name = "metrics", indexes = {
+        @Index(name = "idx_metrics_device_timestamp", columnList = "device_id, timestamp")
+})
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(name = "metrics")
 public class Metrics {
     @Id
+    @Column(nullable = false, updatable = false)
     @Builder.Default
     private UUID id = GenerateUUIDService.v7();
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "device_id", nullable = false)
     private Device device;
 
+    @Column(nullable = false, updatable = false)
     @Builder.Default
     private Instant timestamp = Instant.now();
 
-    @Column(name = "cpu_usage")
-    private Double cpuUsage;
+    @Column(name = "cpu_usage_percent")
+    private Double cpuUsagePercent;
 
-    @Column(name = "ram_usage")
-    private Double ramUsage;
+    @Column(name = "cpu_temp_celsius")
+    private Double cpuTempCelsius;
 
-    @Column(name = "ram_total_mb")
-    private Long ramTotalMb;
+    @Column(name = "cpu_freq_avg_mhz")
+    private Long cpuFreqAvgMhz;
 
-    @Column(name = "disk_usage")
-    private Double diskUsage;
+    @Column(name = "ram_usage_mb")
+    private Long ramUsageMb;
 
-    @Column(name = "disk_total_gb")
-    private Long diskTotalGb;
+    @Column(name = "disk_usage_percent")
+    private Double diskUsagePercent;
 
-    @Column(name = "network_in_bytes")
-    private Long networkInBytes;
+    @Column(name = "network_in_kbps")
+    private Double networkInKbps;
 
-    @Column(name = "network_out_bytes")
-    private Long networkOutBytes;
+    @Column(name = "network_out_kbps")
+    private Double networkOutKbps;
 
-    @Column(name = "gpu_usage")
-    private Double gpuUsage;
-
-    private Double battery;
-
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    @Column(length = 20)
-    private MetricStatus status = MetricStatus.OK;
-
-    @Builder.Default
-    @Column(name = "created_at")
-    private Instant createdAt = Instant.now();
+    @Column(name = "uptime_seconds")
+    private Long uptimeSeconds;
 }

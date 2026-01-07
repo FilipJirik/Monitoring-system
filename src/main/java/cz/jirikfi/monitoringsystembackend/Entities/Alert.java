@@ -4,15 +4,13 @@ import cz.jirikfi.monitoringsystembackend.Entities.Enums.AlertSeverity;
 import cz.jirikfi.monitoringsystembackend.Entities.Enums.MetricType;
 import cz.jirikfi.monitoringsystembackend.Services.GenerateUUIDService;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.UUID;
 
-@Data
+@Setter
+@Getter
 @Entity
 @Builder
 @Table(name = "alerts")
@@ -23,7 +21,7 @@ public class Alert {
     @Builder.Default
     private UUID id = GenerateUUIDService.v7();
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "device_id", nullable = false)
     private Device device;
 
@@ -55,7 +53,7 @@ public class Alert {
     @Column(name = "resolved_at")
     private Instant resolvedAt;
 
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "resolved_by")
     private User resolvedBy;
 }

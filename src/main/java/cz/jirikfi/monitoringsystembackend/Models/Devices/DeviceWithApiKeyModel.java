@@ -1,16 +1,17 @@
 package cz.jirikfi.monitoringsystembackend.Models.Devices;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 
 import java.time.Instant;
 import java.util.UUID;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@Builder
-public class DeviceResponse {
+public class DeviceWithApiKeyModel {
     public UUID id;
     public String name;
     public String operatingSystem;
@@ -29,4 +30,6 @@ public class DeviceResponse {
     public String ownerUsername;
 
     public UUID pictureId;
+
+    public String apiKey;
 }

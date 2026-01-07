@@ -5,7 +5,6 @@ import cz.jirikfi.monitoringsystembackend.Entities.User;
 import cz.jirikfi.monitoringsystembackend.Entities.UserDeviceAccess;
 import cz.jirikfi.monitoringsystembackend.Exceptions.BadRequestException;
 import cz.jirikfi.monitoringsystembackend.Exceptions.NotFoundException;
-import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceInfo;
 import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.CreatePermissionRequest;
 import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.UpdatePermissionRequest;
 import cz.jirikfi.monitoringsystembackend.Models.Users.CreateUserModel;
@@ -14,32 +13,33 @@ import cz.jirikfi.monitoringsystembackend.Models.Users.UpdateUserModel;
 import cz.jirikfi.monitoringsystembackend.Repositories.DeviceRepository;
 import cz.jirikfi.monitoringsystembackend.Repositories.UserDeviceAccessRepository;
 import cz.jirikfi.monitoringsystembackend.Repositories.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    @Autowired
-    private UserDeviceAccessRepository userDeviceAccessRepository;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private DeviceRepository deviceRepository;
+    private final UserDeviceAccessRepository userDeviceAccessRepository;
+    private final UserRepository userRepository;
+    private final DeviceRepository deviceRepository;
 
+    @Transactional(readOnly = true)
     public User getUser(UUID id) {
         return userRepository.findById(id).orElseThrow(() ->
                 new NotFoundException("User with id " + id + " not found"));
     }
-
+    @Transactional(readOnly = true)
     public Device getDevice(UUID id) {
         return deviceRepository.findById(id).orElseThrow(() ->
                 new NotFoundException("Device with id " + id + " not found"));
     }
-
+    @Transactional
     public User createUser(CreateUserModel model) {
         User user = User.builder()
              .username(model.getUsername())
@@ -50,7 +50,7 @@ public class UserService {
         userRepository.save(user);
         return user;
     }
-
+    @Transactional
     public User updateUser(UUID id, UpdateUserModel model) {
         User user = getUser(id);
 
@@ -62,11 +62,12 @@ public class UserService {
 
         return user;
     }
+    @Transactional
     public void deleteUser(UUID id) {
         User user = getUser(id);
         userRepository.delete(user);
     }
-
+    @Transactional
     public UserDeviceAccess grantAccess(UUID userId, UUID deviceId, CreatePermissionRequest model) {
         User user = getUser(userId);
         Device device = getDevice(deviceId);
@@ -80,7 +81,7 @@ public class UserService {
         userDeviceAccessRepository.save(userDeviceAccess);
         return userDeviceAccess;
     }
-
+    @Transactional
     public void revokeAccess(UUID userId, UUID deviceId) {
         UserDeviceAccess userDeviceAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId);
 
@@ -89,7 +90,7 @@ public class UserService {
         }
         userDeviceAccessRepository.delete(userDeviceAccess);
     }
-
+    @Transactional
     public UserDeviceAccess changePermission(UUID userId, UUID deviceId, UpdatePermissionRequest model) {
         UserDeviceAccess userDeviceAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId);
 
@@ -126,18 +127,11 @@ public class UserService {
 //        return device;
 //    }
 
-    public List<Device> getUserDevices(UUID userId) {
-        List<Device> devices = deviceRepository.findDevicesByUserAccess(userId);
-        return devices;
-    }
-    public List<DeviceInfo> getUserDevicesByKeyword(UUID userId, String keyword) {
-        List<Device> devices = deviceRepository.findDevicesByUserAccessKeyword(userId, keyword);
-
-        return devices.stream()
-                .map(d -> new DeviceInfo(d.getName(), d.getLastSeen()))
-                .toList();
-    }
-
+//    public List<Device> getUserDevices(UUID userId) {
+//        List<Device> devices = deviceRepository.findDevicesByUserAccess(userId);
+//        return devices;
+//    }
+    @Transactional(readOnly = true)
     public List<UserResponse> getUsersByKeyword(String keyword) {
         List<User> users = userRepository.findUsersByKeyword(keyword);
 

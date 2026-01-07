@@ -8,24 +8,25 @@ import cz.jirikfi.monitoringsystembackend.Models.Auth.LoginModel;
 import cz.jirikfi.monitoringsystembackend.Models.Auth.RegisterModel;
 import cz.jirikfi.monitoringsystembackend.Repositories.UserRepository;
 import cz.jirikfi.monitoringsystembackend.Security.JwtUtil;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
+    @Transactional
     public AuthResponse register(RegisterModel request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BadRequestException("Username already exists");
@@ -53,7 +54,7 @@ public class AuthService {
                 .token(token)
                 .build();
     }
-
+    @Transactional
     public AuthResponse login(LoginModel request) {
         User user = userRepository.findByUsername(request.getUsername());
 

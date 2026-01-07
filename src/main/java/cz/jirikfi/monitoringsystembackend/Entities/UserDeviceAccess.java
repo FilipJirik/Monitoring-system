@@ -3,14 +3,12 @@ package cz.jirikfi.monitoringsystembackend.Entities;
 
 import cz.jirikfi.monitoringsystembackend.Entities.Enums.PermissionLevel;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.UUID;
 
-@Data
+@Setter
+@Getter
 @Entity
 @Builder
 @Table(name = "user_device_access")
@@ -19,12 +17,12 @@ import java.util.UUID;
 @NoArgsConstructor
 public class UserDeviceAccess {
     @Id
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Id
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_id", nullable = false)
     private Device device;
 

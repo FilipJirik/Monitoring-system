@@ -2,7 +2,6 @@ package cz.jirikfi.monitoringsystembackend.Controllers;
 
 import cz.jirikfi.monitoringsystembackend.Entities.User;
 import cz.jirikfi.monitoringsystembackend.Entities.UserDeviceAccess;
-import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceInfo;
 import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.CreatePermissionRequest;
 import cz.jirikfi.monitoringsystembackend.Models.UserDeviceAccess.UpdatePermissionRequest;
 import cz.jirikfi.monitoringsystembackend.Models.Users.CreateUserModel;
@@ -11,6 +10,7 @@ import cz.jirikfi.monitoringsystembackend.Models.Users.UpdateUserModel;
 import cz.jirikfi.monitoringsystembackend.Services.UserService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +22,9 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
 public class UsersController {
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     // CRUD
     // Create
@@ -99,12 +99,7 @@ public class UsersController {
 //        return ResponseEntity.ok().body(devices);
 //    }
 
-    // GET /api/users/{userId}/devices?keyword=
-    @GetMapping("/{userId}/devices")
-    public ResponseEntity<List<DeviceInfo>> getUserDevicesByKeyword(@PathVariable UUID userId, @RequestParam String keyword) {
-        List<DeviceInfo> devices = userService.getUserDevicesByKeyword(userId, keyword);
-        return ResponseEntity.ok().body(devices);
-    }
+
 
 
 

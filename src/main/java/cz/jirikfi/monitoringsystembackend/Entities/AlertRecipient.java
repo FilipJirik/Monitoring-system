@@ -1,14 +1,12 @@
 package cz.jirikfi.monitoringsystembackend.Entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.UUID;
 
-@Data
+@Setter
+@Getter
 @Entity
 @Builder
 @Table(name = "alert_recipients")
@@ -19,11 +17,11 @@ public class AlertRecipient {
     @Builder.Default
     private UUID id = UUID.randomUUID();
 
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_id")
     private Device device;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

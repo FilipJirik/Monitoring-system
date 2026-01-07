@@ -1,15 +1,16 @@
 package cz.jirikfi.monitoringsystembackend.Controllers;
 
 
-import cz.jirikfi.monitoringsystembackend.Entities.Device;
 import cz.jirikfi.monitoringsystembackend.Entities.Metrics;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.CreateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceResponse;
+import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceWithApiKeyModel;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.UpdateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.Services.AuthorizationService;
 import cz.jirikfi.monitoringsystembackend.Services.DeviceService;
 import cz.jirikfi.monitoringsystembackend.Services.MetricsService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,35 +25,23 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/devices")
+@RequiredArgsConstructor
 public class DevicesController {
 
-    @Autowired
-    private DeviceService deviceService;
-    @Autowired
-    private MetricsService metricsService;
-    @Autowired
-    private AuthorizationService authorizationService;
+    private final DeviceService deviceService;
+    private final MetricsService metricsService;
+    private final AuthorizationService authorizationService;
 
     // POST /api/devices createDevice
     @PostMapping
-    public ResponseEntity<DeviceResponse> createDevice(
+    public ResponseEntity<DeviceWithApiKeyModel> createDevice(
             @RequestBody @Valid CreateDeviceModel model,
             @AuthenticationPrincipal UUID userId) {
-        DeviceResponse device = deviceService.createDevice(userId, model);
+        DeviceWithApiKeyModel device = deviceService.createDevice(userId, model);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(device);
     }
-    // GET /api/devices/{id} getDevice
-    @GetMapping("/{id}")
-    public ResponseEntity<DeviceResponse> getDevice(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal UUID userId) {
 
-        authorizationService.checkDeviceAccess(userId, id);
-
-        DeviceResponse device = deviceService.getDevice(id);
-        return ResponseEntity.ok().body(device);
-    }
     // PUT /api/devices/{id} updateDevice
     @PutMapping("/{id}")
     public ResponseEntity<DeviceResponse> updateDevice(
@@ -76,7 +65,6 @@ public class DevicesController {
         deviceService.deleteDevice(id);
         return ResponseEntity.noContent().build();
     }
-
     // PUT /api/devices/{id}/picture
     @PutMapping("/{id}/picture")
     public ResponseEntity<DeviceResponse> uploadPicture(
@@ -89,7 +77,7 @@ public class DevicesController {
         DeviceResponse device = deviceService.changePicture(id, picture);
         return ResponseEntity.ok().body(device);
     }
-    // POST /{id}/regenerate-api-key Regenate current api key
+    // POST /api/devices/{id}/regenerate-api-key Regenerate current api key
     @PostMapping("/{id}/regenerate-api-key")
     public ResponseEntity<String> regenerateApiKey(
             @PathVariable UUID id,
@@ -100,23 +88,71 @@ public class DevicesController {
         String newApiKey = deviceService.regenerateApiKey(id);
         return ResponseEntity.ok(newApiKey);
     }
-    // GET /api/devices GET all user's devices
-//    @GetMapping
-//    public ResponseEntity<DeviceResponse> getAllDevices(
+
+    // POST /api/devices/regenerate-api-key?name= Regenerate current api key of device with name
+    @GetMapping("/regenerate-api-key")
+    public ResponseEntity<DeviceWithApiKeyModel> regenerateApiKey(
+            @RequestParam String name,
+            @AuthenticationPrincipal UUID userId) {
+
+        DeviceWithApiKeyModel model = deviceService.regenerateApiKeyByName(userId, name);
+        return ResponseEntity.ok(model);
+    }
+
+
+
+    // GET /api/devices/{id}/api-key Get current api key
+//    @GetMapping("/{id}/api-key")
+//    public ResponseEntity<String> getApiKey(
+//            @PathVariable UUID id,
 //            @AuthenticationPrincipal UUID userId) {
 //
-//        authorizationService.checkDeviceAccess(userId, id);
+//        authorizationService.checkDeviceOwnership(userId, id);
 //
-//        DeviceResponse device = deviceService.getDevice(id);
-//        return ResponseEntity.ok().body(device);
-//    } // TODO
+//        String apiKey = deviceService.getApiKey(id, userId);
+//        return ResponseEntity.ok(apiKey);
+//    }
 
+    // GET /api/devices/{id} GET device by id
+    @GetMapping("/{id}")
+    public ResponseEntity<DeviceResponse> getDevice(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UUID userId) {
 
-    // Metrics
-    // GET /devices/{id}/metrics  GET all metrics of device
-    @GetMapping("{id}/metrics")
-    public ResponseEntity<List<Metrics>> getMetrics(@PathVariable UUID id) {
-        List<Metrics> metrics = metricsService.getMetrics(id);
-        return ResponseEntity.ok().body(metrics);
-    } // TODO add API KEY validation
+        authorizationService.checkDeviceAccess(userId, id);
+
+        DeviceResponse device = deviceService.getDevice(id);
+        return ResponseEntity.ok().body(device);
+    }
+
+    // GET /api/devices GET all devices
+    @GetMapping
+    public ResponseEntity<List<DeviceResponse>> getAllDevices(
+            @AuthenticationPrincipal UUID userId) {
+
+        List<DeviceResponse> devices = deviceService.getAllAccessibleDevices(userId);
+        return ResponseEntity.ok(devices);
+    }
+
+    /**
+     * GET /api/devices/owned
+     * Only devices where user is OWNER
+     *
+     * If query has parameter ?name=..., return API key model
+     * If query does not have parameter, return without API keys models
+     */
+//    @GetMapping("/owned")
+//    public ResponseEntity<?> getOwnedDevices(
+//            @RequestParam(required = false) String name,
+//            @AuthenticationPrincipal UUID userId) {
+//
+//        if (name != null && !name.isBlank()) {
+//            DeviceWithApiKeyModel device = deviceService.getOwnedDeviceByName(userId, name);
+//            return ResponseEntity.ok(device);
+//        }
+//
+//        List<DeviceResponse> devices = deviceService.getOwnedDevices(userId);
+//        return ResponseEntity.ok(devices);
+//    }
+
 }

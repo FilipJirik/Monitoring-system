@@ -6,12 +6,8 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
-
-
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 // DTO
 @AllArgsConstructor
@@ -30,6 +26,7 @@ public class CreateDeviceModel {
     private String ipAddress;
 
     @Nullable
+    @Pattern(regexp = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$")
     private String macAddress;
 
     @Nullable

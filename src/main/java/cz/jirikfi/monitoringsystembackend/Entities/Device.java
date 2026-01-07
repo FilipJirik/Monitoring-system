@@ -3,17 +3,15 @@ package cz.jirikfi.monitoringsystembackend.Entities;
 import cz.jirikfi.monitoringsystembackend.Services.GenerateUUIDService;
 import jakarta.persistence.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.*;
 
-@Data
+@Setter
+@Getter
 @Entity
 @Builder
 @Table(name = "devices")
@@ -24,13 +22,12 @@ public class Device {
     @Builder.Default
     private UUID id = GenerateUUIDService.v7();
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String name;
 
     @Column(name = "operating_system", length = 100)
     private String operatingSystem;
 
-    @JdbcTypeCode(SqlTypes.INET)
     @Column(name = "ip_address")
     private String ipAddress;
 
@@ -66,27 +63,27 @@ public class Device {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "picture_id")
     private Picture picture;
 
-    @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL)
     @Builder.Default
     private Set<UserDeviceAccess> userAccesses = new HashSet<>();
 
-    @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Metrics> metrics = new ArrayList<>();
 
-    @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Alert> alerts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL)
     @Builder.Default
     private List<AlertThreshold> alertThresholds = new ArrayList<>();
 
-    @OneToMany(mappedBy = "device", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL)
     @Builder.Default
     private List<AlertRecipient> alertRecipients = new ArrayList<>();
 }
