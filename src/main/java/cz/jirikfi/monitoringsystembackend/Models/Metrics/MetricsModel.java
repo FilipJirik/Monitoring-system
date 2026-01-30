@@ -15,6 +15,7 @@ import java.time.Instant;
 @Builder
 public class MetricsModel {
     @Nullable
+    @Builder.Default
     private Instant timestamp = Instant.now();
 
     @Min(0)

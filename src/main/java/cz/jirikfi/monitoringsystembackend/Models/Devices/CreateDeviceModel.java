@@ -42,6 +42,7 @@ public class CreateDeviceModel {
     private String model;
 
     @Nullable
+    @Builder.Default
     private Boolean sshEnabled = false;
 }
 

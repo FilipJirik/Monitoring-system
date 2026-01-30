@@ -30,6 +30,8 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    private final int BCRYPT_DEFAULT_COST = 12;
+
     //@Value("${app.cors.allowed-origins}")
     //private List<String> allowedOrigins;
 
@@ -63,7 +65,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(BCRYPT_DEFAULT_COST);
     }
 
     @Bean

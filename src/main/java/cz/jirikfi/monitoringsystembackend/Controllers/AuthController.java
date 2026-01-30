@@ -1,6 +1,7 @@
 package cz.jirikfi.monitoringsystembackend.Controllers;
 
 import cz.jirikfi.monitoringsystembackend.Models.Auth.AuthResponse;
+import cz.jirikfi.monitoringsystembackend.Models.Auth.ChangePasswordRequest;
 import cz.jirikfi.monitoringsystembackend.Models.Auth.LoginModel;
 import cz.jirikfi.monitoringsystembackend.Models.Auth.RefreshTokenRequest;
 import cz.jirikfi.monitoringsystembackend.Models.Auth.RegisterModel;
@@ -37,6 +38,12 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal UUID userId) {
+        authService.logout(userId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         AuthResponse response = authService.refreshToken(request);
@@ -47,5 +54,13 @@ public class AuthController {
     public ResponseEntity<UserInfo> getCurrentUser(@AuthenticationPrincipal UUID userId) {
         UserInfo userInfo = authService.getCurrentUserInfo(userId);
         return ResponseEntity.ok(userInfo);
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Void> changePassword(
+            @AuthenticationPrincipal UUID userId,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(userId, request);
+        return ResponseEntity.noContent().build();
     }
 }

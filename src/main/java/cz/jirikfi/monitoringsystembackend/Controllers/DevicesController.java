@@ -49,7 +49,7 @@ public class DevicesController {
     }
     // DELETE /api/devices/{id} deleteDevice
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteDevice(
+    public ResponseEntity<Void> deleteDevice(
             @PathVariable UUID id,
             @AuthenticationPrincipal UUID userId) {
 
@@ -60,7 +60,7 @@ public class DevicesController {
     }
     // POST /api/devices/{id}/image
     @PostMapping("/{id}/image")
-    public ResponseEntity<?> uploadPicture(
+    public ResponseEntity<Void> uploadPicture(
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal UUID userId) {

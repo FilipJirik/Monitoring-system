@@ -48,7 +48,7 @@ public class MetricsController {
     }
 
     @GetMapping("/latest")
-    public ResponseEntity<MetricsModel> getLatestMetrics(
+    public ResponseEntity<MetricsModel> getLatestMetrics( // FIXME
             @PathVariable UUID deviceId,
             @AuthenticationPrincipal User user) {
 
