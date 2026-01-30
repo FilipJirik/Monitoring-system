@@ -1,10 +1,8 @@
 package cz.jirikfi.monitoringsystembackend.Services;
 
 import cz.jirikfi.monitoringsystembackend.Entities.Device;
-import cz.jirikfi.monitoringsystembackend.Entities.Picture;
 import cz.jirikfi.monitoringsystembackend.Entities.User;
 import cz.jirikfi.monitoringsystembackend.Exceptions.BadRequestException;
-import cz.jirikfi.monitoringsystembackend.Exceptions.InternalErrorException;
 import cz.jirikfi.monitoringsystembackend.Exceptions.NotFoundException;
 import cz.jirikfi.monitoringsystembackend.Mappers.DeviceMapper;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.CreateDeviceModel;
@@ -12,15 +10,14 @@ import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceWithApiKeyModel;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceResponse;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.UpdateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.Repositories.DeviceRepository;
-import cz.jirikfi.monitoringsystembackend.Repositories.PictureRepository;
 import cz.jirikfi.monitoringsystembackend.Repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,10 +26,12 @@ import java.util.UUID;
 public class DeviceService {
     private final DeviceRepository deviceRepository;
     private final UserRepository userRepository;
-    private final PictureRepository pictureRepository;
-    private final PictureService pictureService;
+    private final ImageService imageService;
     private final DeviceMapper deviceMapper;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.pictures.default-filename:default.png}")
+    private String defaultPictureFilename;
 
     @Transactional
     public DeviceWithApiKeyModel createDevice(UUID userId, CreateDeviceModel model) {
@@ -44,8 +43,7 @@ public class DeviceService {
 
         Device device = deviceMapper.createToEntity(model);
         device.setOwner(user);
-
-        device.setPicture(pictureService.getDefaultPicture()); // FIXME better solution
+        device.setImageFilename(defaultPictureFilename);
 
         String rawApiKey = GenerateApiKeyService.generate();
         device.setApiKey(passwordEncoder.encode(rawApiKey));
@@ -81,29 +79,36 @@ public class DeviceService {
         deviceRepository.delete(device);
     }
     @Transactional
-    public DeviceResponse changePicture(UUID id, MultipartFile file) {
-        Device device =  deviceRepository.findById(id).orElseThrow(() ->
+    public void changeDevicePicture(UUID id, MultipartFile file) {
+        Device device = deviceRepository.findById(id).orElseThrow(() ->
                 new NotFoundException("Device with id " + id + " not found"));
 
-        byte[] data = null;
+        String oldFilename = device.getImageFilename();
 
-        try {
-            data = file.getBytes();
-        } catch (IOException e) {
-            throw new InternalErrorException("Could not read the picture");
+        if (oldFilename != null && !oldFilename.equals(defaultPictureFilename)) {
+            imageService.deleteImage(oldFilename);
         }
 
-        Picture pictureModel = Picture.builder()
-                .filename(file.getOriginalFilename())
-                .data(data)
-                .build();
+        String newFilename = imageService.saveImage(file);
+        device.setImageFilename(newFilename);
 
-        pictureRepository.save(pictureModel);
-
-        device.setPicture(pictureModel);
         deviceRepository.save(device);
+    }
 
-        return deviceMapper.toResponse(device);
+    @Transactional
+    public void resetDevicePicture(UUID id) {
+        Device device = deviceRepository.findById(id).orElseThrow(() ->
+                new NotFoundException("Device with id " + id + " not found"));
+
+        String currentFilename = device.getImageFilename();
+
+        if (currentFilename == null || currentFilename.equals(defaultPictureFilename)) {
+            return;
+        }
+        imageService.deleteImage(currentFilename);
+
+        device.setImageFilename(defaultPictureFilename);
+        deviceRepository.save(device);
     }
     @Transactional
     public String regenerateApiKey(UUID deviceId) {
@@ -137,12 +142,6 @@ public class DeviceService {
         return response;
     }
 
-//    public String getApiKey(UUID deviceId, UUID userId) {
-//        Device device = deviceRepository.findById(deviceId)
-//                .orElseThrow(() -> new NotFoundException("Device not found"));
-//
-//        return device.getApiKey();
-//    } // FIXME - I have Api key hashed so cannot return it
     @Transactional
     public List<DeviceResponse> getAllAccessibleDevices(UUID userId) {
         List<Device> devices = deviceRepository.findAllAccessibleByUser(userId);
@@ -151,7 +150,7 @@ public class DeviceService {
     }
 
     @Transactional
-    public DeviceWithApiKeyModel getOwnedDeviceByName(UUID userId, String deviceName) {
+    public DeviceWithApiKeyModel getOwnedDeviceByName(UUID userId, String deviceName) { // FIXME
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 

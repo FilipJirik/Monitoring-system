@@ -54,5 +54,5 @@ public class DeviceDetail {
     private User owner;
 
     @NotNull
-    private Picture picture;
+    private String imageFilename;
 }

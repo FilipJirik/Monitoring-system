@@ -4,8 +4,6 @@ import cz.jirikfi.monitoringsystembackend.Services.GenerateUUIDService;
 import jakarta.persistence.*;
 
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.*;
@@ -42,8 +40,8 @@ public class Device {
 
     private String model;
 
-    @Column(name = "ssh_enabled")
     @Builder.Default
+    @Column(name = "ssh_enabled")
     private Boolean sshEnabled = false;
 
     @Column(name = "last_seen")
@@ -59,13 +57,13 @@ public class Device {
     @Column(name = "api_key", unique = true, nullable = false)
     private String apiKey;
 
+    @Builder.Default
+    @Column(name = "image_filename")
+    private String imageFilename = "default.png";
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "picture_id")
-    private Picture picture;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL)
     @Builder.Default

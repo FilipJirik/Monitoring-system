@@ -28,5 +28,5 @@ public class DeviceResponse {
     public UUID ownerId;
     public String ownerUsername;
 
-    public UUID pictureId;
+    public String imageFilename;
 }

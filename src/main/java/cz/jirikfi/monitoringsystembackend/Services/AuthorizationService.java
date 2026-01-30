@@ -7,7 +7,6 @@ import cz.jirikfi.monitoringsystembackend.Exceptions.NotFoundException;
 import cz.jirikfi.monitoringsystembackend.Repositories.DeviceRepository;
 import cz.jirikfi.monitoringsystembackend.Repositories.UserDeviceAccessRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +39,7 @@ public class AuthorizationService {
         Device device = deviceRepository.findById(deviceId)
                 .orElseThrow(() -> new NotFoundException("Device not found: " + deviceId));
 
-        if (device.getOwner().getId().equals(userId)) { // Is owner
+        if (device.getOwner().getId().equals(userId)) { // Is owner - has full access
             return;
         }
         PermissionLevel permission = userDeviceAccessRepository
@@ -50,6 +49,7 @@ public class AuthorizationService {
             throw new ForbiddenException("You don't have permission to edit this device");
         }
     }
+
     @Transactional(readOnly = true)
     public void checkDeviceOwnership(UUID userId, UUID deviceId) {
         Device device = deviceRepository.findById(deviceId)
@@ -65,10 +65,39 @@ public class AuthorizationService {
                 .orElseThrow(() -> new NotFoundException("Device not found: " + deviceId));
 
         if (device.getOwner().getId().equals(userId)) {
-            return PermissionLevel.WRITE;
+            // Owner has the highest permission level (equivalent to ADMIN)
+            return PermissionLevel.ADMIN;
         }
-        return userDeviceAccessRepository
+        PermissionLevel permission = userDeviceAccessRepository
                 .findPermissionLevel(userId, deviceId);
+        
+        // Return null if no access, so callers can check for null
+        return permission;
+    }
+    
+    @Transactional(readOnly = true)
+    public boolean hasReadAccess(UUID userId, UUID deviceId) {
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new NotFoundException("Device not found: " + deviceId));
+
+        if (device.getOwner().getId().equals(userId)) {
+            return true; // Owner has all permissions
+        }
+        return userDeviceAccessRepository.existsByUserIdAndDeviceId(userId, deviceId);
+    }
+    
+    @Transactional(readOnly = true)
+    public boolean hasWriteAccess(UUID userId, UUID deviceId) {
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new NotFoundException("Device not found: " + deviceId));
+
+        if (device.getOwner().getId().equals(userId)) {
+            return true; // Owner has all permissions
+        }
+        PermissionLevel permission = userDeviceAccessRepository
+                .findPermissionLevel(userId, deviceId);
+        
+        return permission == PermissionLevel.WRITE || permission == PermissionLevel.ADMIN;
     }
 
 

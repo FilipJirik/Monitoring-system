@@ -1,5 +1,6 @@
 package cz.jirikfi.monitoringsystembackend.Models.Auth;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +13,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LoginModel {
     @NotBlank
-    String username;
+    @Email
+    String email;
 
     @NotBlank
     String password;

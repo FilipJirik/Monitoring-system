@@ -30,7 +30,7 @@ public class DeviceMapper {
         .updatedAt(device.getUpdatedAt())
         .ownerId(device.getOwner().getId())
         .ownerUsername(device.getOwner().getUsername())
-        .pictureId(device.getPicture().getId())
+        .imageFilename(device.getImageFilename())
         .build();
     }
 
@@ -51,7 +51,7 @@ public class DeviceMapper {
                 .updatedAt(device.getUpdatedAt())
                 .ownerId(device.getOwner().getId())
                 .ownerUsername(device.getOwner().getUsername())
-                .pictureId(device.getPicture().getId())
+                .imageFilename(device.getImageFilename())
                 .apiKey(device.getApiKey())
                 .build();
     }

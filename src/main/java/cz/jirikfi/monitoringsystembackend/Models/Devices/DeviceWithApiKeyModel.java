@@ -1,6 +1,5 @@
 package cz.jirikfi.monitoringsystembackend.Models.Devices;
 
-import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 
 import java.time.Instant;
@@ -29,7 +28,7 @@ public class DeviceWithApiKeyModel {
     public UUID ownerId;
     public String ownerUsername;
 
-    public UUID pictureId;
+    public String imageFilename;
 
     public String apiKey;
 }

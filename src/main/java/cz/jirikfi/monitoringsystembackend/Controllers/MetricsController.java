@@ -22,7 +22,7 @@ public class MetricsController {
     private final MetricsService metricsService;
     private final AuthorizationService authorizationService;
 
-    private static final String API_KEY_HEADER = "X-API-KEY";
+    private static final String API_KEY_HEADER = "X-API-KEY"; // FIXME: use modern standard
 
     @PostMapping
     public ResponseEntity<?> receiveMetrics(

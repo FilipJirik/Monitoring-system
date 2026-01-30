@@ -1,8 +1,11 @@
 package cz.jirikfi.monitoringsystembackend.Exceptions;
 
 
+import lombok.Getter;
+
 import java.time.Instant;
 
+@Getter
 public class ApiErrorMessage {
     private final Instant timestamp;
     private final int status;
@@ -17,6 +20,5 @@ public class ApiErrorMessage {
         this.message = message;
         this.path = path;
     }
-
 
 }

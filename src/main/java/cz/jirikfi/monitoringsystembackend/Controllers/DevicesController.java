@@ -1,7 +1,5 @@
 package cz.jirikfi.monitoringsystembackend.Controllers;
 
-
-import cz.jirikfi.monitoringsystembackend.Entities.Metrics;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.CreateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceResponse;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceWithApiKeyModel;
@@ -11,7 +9,6 @@ import cz.jirikfi.monitoringsystembackend.Services.DeviceService;
 import cz.jirikfi.monitoringsystembackend.Services.MetricsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,15 +18,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
-/// Origin for accessing information about stored devices
-
 @RestController
 @RequestMapping("/api/devices")
 @RequiredArgsConstructor
 public class DevicesController {
-
     private final DeviceService deviceService;
-    private final MetricsService metricsService;
     private final AuthorizationService authorizationService;
 
     // POST /api/devices createDevice
@@ -65,18 +58,29 @@ public class DevicesController {
         deviceService.deleteDevice(id);
         return ResponseEntity.noContent().build();
     }
-    // PUT /api/devices/{id}/picture
-    @PutMapping("/{id}/picture")
-    public ResponseEntity<DeviceResponse> uploadPicture(
+    // POST /api/devices/{id}/image
+    @PostMapping("/{id}/image")
+    public ResponseEntity<?> uploadPicture(
             @PathVariable UUID id,
-            @RequestParam("picture") MultipartFile picture,
+            @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal UUID userId) {
 
         authorizationService.checkDeviceWritePermission(userId, id);
 
-        DeviceResponse device = deviceService.changePicture(id, picture);
-        return ResponseEntity.ok().body(device);
+        deviceService.changeDevicePicture(id, file);
+        return ResponseEntity.noContent().build();
     }
+    // DELETE /api/devices/{id}/image
+    @DeleteMapping("/{id}/image")
+    public ResponseEntity<Void> deletePicture(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UUID userId
+    ) {
+        authorizationService.checkDeviceWritePermission(userId, id);
+        deviceService.resetDevicePicture(id);
+        return ResponseEntity.noContent().build();
+    }
+
     // POST /api/devices/{id}/regenerate-api-key Regenerate current api key
     @PostMapping("/{id}/regenerate-api-key")
     public ResponseEntity<String> regenerateApiKey(
@@ -98,20 +102,6 @@ public class DevicesController {
         DeviceWithApiKeyModel model = deviceService.regenerateApiKeyByName(userId, name);
         return ResponseEntity.ok(model);
     }
-
-
-
-    // GET /api/devices/{id}/api-key Get current api key
-//    @GetMapping("/{id}/api-key")
-//    public ResponseEntity<String> getApiKey(
-//            @PathVariable UUID id,
-//            @AuthenticationPrincipal UUID userId) {
-//
-//        authorizationService.checkDeviceOwnership(userId, id);
-//
-//        String apiKey = deviceService.getApiKey(id, userId);
-//        return ResponseEntity.ok(apiKey);
-//    }
 
     // GET /api/devices/{id} GET device by id
     @GetMapping("/{id}")
