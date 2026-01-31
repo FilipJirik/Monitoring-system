@@ -1,5 +1,6 @@
 package cz.jirikfi.monitoringsystembackend.Entities;
 
+import cz.jirikfi.monitoringsystembackend.Services.GenerateUUIDService;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,7 +16,7 @@ import java.util.UUID;
 public class AlertRecipient {
     @Id
     @Builder.Default
-    private UUID id = UUID.randomUUID();
+    private UUID id = GenerateUUIDService.v7();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_id")

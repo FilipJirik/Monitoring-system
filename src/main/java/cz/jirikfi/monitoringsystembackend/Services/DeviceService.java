@@ -111,17 +111,6 @@ public class DeviceService {
         deviceRepository.save(device);
     }
     @Transactional
-    public String regenerateApiKey(UUID deviceId) {
-        Device device = deviceRepository.findById(deviceId)
-                .orElseThrow(() -> new NotFoundException("Device not found"));
-
-        String newApiKey = GenerateApiKeyService.generate();
-        device.setApiKey(passwordEncoder.encode(newApiKey));
-        deviceRepository.save(device);
-
-        return newApiKey;
-    }
-    @Transactional
     public DeviceWithApiKeyModel regenerateApiKeyByName(UUID userId, String deviceName) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));

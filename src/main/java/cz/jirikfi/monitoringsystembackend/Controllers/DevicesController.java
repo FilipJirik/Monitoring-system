@@ -4,6 +4,12 @@ import cz.jirikfi.monitoringsystembackend.Models.Devices.CreateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceResponse;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.DeviceWithApiKeyModel;
 import cz.jirikfi.monitoringsystembackend.Models.Devices.UpdateDeviceModel;
+import cz.jirikfi.monitoringsystembackend.Models.Recipients.RecipientResponse;
+import cz.jirikfi.monitoringsystembackend.Models.Recipients.SetRecipientRequest;
+import cz.jirikfi.monitoringsystembackend.Models.Thresholds.CreateThresholdRequest;
+import cz.jirikfi.monitoringsystembackend.Models.Thresholds.ThresholdResponse;
+import cz.jirikfi.monitoringsystembackend.Services.AlertRecipientService;
+import cz.jirikfi.monitoringsystembackend.Services.AlertThresholdService;
 import cz.jirikfi.monitoringsystembackend.Services.AuthorizationService;
 import cz.jirikfi.monitoringsystembackend.Services.DeviceService;
 import cz.jirikfi.monitoringsystembackend.Services.MetricsService;
@@ -24,6 +30,8 @@ import java.util.UUID;
 public class DevicesController {
     private final DeviceService deviceService;
     private final AuthorizationService authorizationService;
+    private final AlertThresholdService alertThresholdService;
+    private final AlertRecipientService alertRecipientService;
 
     // POST /api/devices createDevice
     @PostMapping
@@ -81,20 +89,8 @@ public class DevicesController {
         return ResponseEntity.noContent().build();
     }
 
-    // POST /api/devices/{id}/regenerate-api-key Regenerate current api key
-    @PostMapping("/{id}/regenerate-api-key")
-    public ResponseEntity<String> regenerateApiKey(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal UUID userId) {
-
-        authorizationService.checkDeviceOwnership(userId, id);
-
-        String newApiKey = deviceService.regenerateApiKey(id);
-        return ResponseEntity.ok(newApiKey);
-    }
-
     // POST /api/devices/regenerate-api-key?name= Regenerate current api key of device with name
-    @GetMapping("/regenerate-api-key")
+    @PostMapping("/regenerate-api-key")
     public ResponseEntity<DeviceWithApiKeyModel> regenerateApiKey(
             @RequestParam String name,
             @AuthenticationPrincipal UUID userId) {
@@ -122,6 +118,56 @@ public class DevicesController {
 
         List<DeviceResponse> devices = deviceService.getAllAccessibleDevices(userId);
         return ResponseEntity.ok(devices);
+    }
+
+    @GetMapping("/{deviceId}/thresholds")
+    public ResponseEntity<List<ThresholdResponse>> getThresholds(
+            @PathVariable UUID deviceId,
+            @AuthenticationPrincipal UUID userId) {
+
+        authorizationService.checkDeviceAccess(userId, deviceId);
+        List<ThresholdResponse> thresholds = alertThresholdService.getThresholdsByDeviceId(deviceId);
+        return ResponseEntity.ok(thresholds);
+    }
+
+    @PostMapping("/{deviceId}/thresholds")
+    public ResponseEntity<ThresholdResponse> createThreshold(
+            @PathVariable UUID deviceId,
+            @Valid @RequestBody CreateThresholdRequest request,
+            @AuthenticationPrincipal UUID userId) {
+
+        authorizationService.checkDeviceWritePermission(userId, deviceId);
+        ThresholdResponse threshold = alertThresholdService.createThreshold(deviceId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(threshold);
+    }
+
+    @GetMapping("/{deviceId}/recipients")
+    public ResponseEntity<List<RecipientResponse>> getRecipients(
+            @PathVariable UUID deviceId,
+            @AuthenticationPrincipal UUID userId) {
+
+        List<RecipientResponse> recipients = alertRecipientService.getRecipientsByDeviceId(deviceId, userId);
+        return ResponseEntity.ok(recipients);
+    }
+
+    @PutMapping("/{deviceId}/recipients")
+    public ResponseEntity<RecipientResponse> setRecipient(
+            @PathVariable UUID deviceId,
+            @Valid @RequestBody SetRecipientRequest request,
+            @AuthenticationPrincipal UUID userId) {
+
+        RecipientResponse recipient = alertRecipientService.setRecipient(deviceId, userId, request);
+        return ResponseEntity.ok(recipient);
+    }
+
+    @DeleteMapping("/{deviceId}/recipients/{recipientUserId}")
+    public ResponseEntity<Void> deleteRecipient(
+            @PathVariable UUID deviceId,
+            @PathVariable UUID recipientUserId,
+            @AuthenticationPrincipal UUID userId) {
+
+        alertRecipientService.deleteRecipient(deviceId, recipientUserId, userId);
+        return ResponseEntity.noContent().build();
     }
 
     /**

@@ -30,7 +30,7 @@ public class MetricsService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public void saveMetrics(UUID deviceId, String rawApiKey, MetricsModel model) {
+    public Metrics saveMetrics(UUID deviceId, String rawApiKey, MetricsModel model) {
         Device device = deviceRepository.findById(deviceId)
                 .orElseThrow(() -> new NotFoundException("Device not found"));
 
@@ -43,8 +43,7 @@ public class MetricsService {
 
         Metrics metrics = metricsMapper.toEntity(model, device);
         metricsRepository.save(metrics);
-
-        // TODO: checkThresholds(metrics);
+        return metrics;
     }
 
     @Transactional(readOnly = true)

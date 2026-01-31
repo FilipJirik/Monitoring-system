@@ -1,7 +1,9 @@
 package cz.jirikfi.monitoringsystembackend.Controllers;
 
+import cz.jirikfi.monitoringsystembackend.Entities.Metrics;
 import cz.jirikfi.monitoringsystembackend.Entities.User;
 import cz.jirikfi.monitoringsystembackend.Models.Metrics.MetricsModel;
+import cz.jirikfi.monitoringsystembackend.Services.AlertService;
 import cz.jirikfi.monitoringsystembackend.Services.AuthorizationService;
 import cz.jirikfi.monitoringsystembackend.Services.MetricsService;
 import jakarta.validation.Valid;
@@ -21,17 +23,19 @@ public class MetricsController {
 
     private final MetricsService metricsService;
     private final AuthorizationService authorizationService;
+    private final AlertService alertService;
 
     private static final String API_KEY_HEADER = "X-API-KEY"; // FIXME: use modern standard
 
     @PostMapping
-    public ResponseEntity<?> receiveMetrics(
+    public ResponseEntity<Void> receiveMetrics(
             @PathVariable UUID deviceId,
             @RequestHeader(API_KEY_HEADER) String apiKey,
             @Valid @RequestBody MetricsModel model) {
 
-        metricsService.saveMetrics(deviceId, apiKey, model);
-        return ResponseEntity.ok().build();
+        Metrics metricEntity = metricsService.saveMetrics(deviceId, apiKey, model);
+        alertService.checkThresholdsAsync(metricEntity);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping

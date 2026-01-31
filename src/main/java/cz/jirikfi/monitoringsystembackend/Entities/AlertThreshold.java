@@ -1,6 +1,8 @@
 package cz.jirikfi.monitoringsystembackend.Entities;
 
+import cz.jirikfi.monitoringsystembackend.Entities.Enums.AlertSeverity;
 import cz.jirikfi.monitoringsystembackend.Entities.Enums.MetricType;
+import cz.jirikfi.monitoringsystembackend.Entities.Enums.ThresholdOperator;
 import cz.jirikfi.monitoringsystembackend.Services.GenerateUUIDService;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,17 +27,17 @@ public class AlertThreshold {
     private Device device;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "metric_type", nullable = false, length = 50)
+    @Column(name = "metric_type", nullable = false)
     private MetricType metricType;
 
-    @Column(name = "warning_threshold")
-    private Double warningThreshold;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ThresholdOperator operator;
 
-    @Column(name = "critical_threshold")
-    private Double criticalThreshold;
+    @Column(nullable = false)
+    private Double thresholdValue;
 
-    @Builder.Default
-    private Boolean enabled = true;
-
-
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AlertSeverity severity;
 }
