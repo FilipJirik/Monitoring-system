@@ -42,3 +42,17 @@ app:
   pictures:
     upload-dir: uploads/pictures
     default-filename: default.png
+  security:
+    admin-email: ${APP_ADMIN_EMAIL}
+    admin-password: ${APP_ADMIN_PASSWORD}
+
+# Background tasks
+org:
+  jobrunr:
+    background-job-server:
+      enabled: true
+    dashboard:
+      enabled: true
+      port: 8000
+    database:
+      skip-create: false

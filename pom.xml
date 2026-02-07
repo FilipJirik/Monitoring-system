@@ -110,6 +110,27 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Background task handler -->
+        <!-- Source: https://mvnrepository.com/artifact/org.jobrunr/jobrunr -->
+        <dependency>
+            <groupId>org.jobrunr</groupId>
+            <artifactId>jobrunr-spring-boot-3-starter</artifactId>
+            <version>8.4.1</version>
+        </dependency>
+        <!-- Caching -->
+        <!-- Source: https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.0.4</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+
         <!-- Add .env files automatically -->
         <!-- https://mvnrepository.com/artifact/me.paulschwarz/spring-dotenv -->
         <dependency>

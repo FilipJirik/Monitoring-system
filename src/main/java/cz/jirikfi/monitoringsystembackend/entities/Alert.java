@@ -1,0 +1,59 @@
+package cz.jirikfi.monitoringsystembackend.entities;
+
+import cz.jirikfi.monitoringsystembackend.enums.AlertSeverity;
+import cz.jirikfi.monitoringsystembackend.enums.MetricType;
+import cz.jirikfi.monitoringsystembackend.utils.UuidGenerator;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Setter
+@Getter
+@Entity
+@Builder
+@Table(name = "alerts")
+@AllArgsConstructor
+@NoArgsConstructor
+public class Alert {
+    @Id
+    @Builder.Default
+    private UUID id = UuidGenerator.v7();
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "device_id", nullable = false)
+    private Device device;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "metric_type", nullable = false, length = 50)
+    private MetricType metricType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private AlertSeverity severity;
+
+    @Column(nullable = false)
+    private String message;
+
+    @Column(name = "metric_value")
+    private Double metricValue;
+
+    @Column(name = "threshold_value")
+    private Double thresholdValue;
+
+    @Column(name = "is_resolved")
+    @Builder.Default
+    private Boolean isResolved = false;
+
+    @Column(name = "created_at")
+    @Builder.Default
+    private Instant createdAt = Instant.now();
+
+    @Column(name = "resolved_at")
+    private Instant resolvedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resolved_by")
+    private User resolvedBy;
+}
