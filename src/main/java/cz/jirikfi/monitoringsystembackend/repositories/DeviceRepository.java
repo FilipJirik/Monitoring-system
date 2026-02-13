@@ -2,6 +2,7 @@ package cz.jirikfi.monitoringsystembackend.repositories;
 
 import cz.jirikfi.monitoringsystembackend.entities.Device;
 import cz.jirikfi.monitoringsystembackend.entities.User;
+import cz.jirikfi.monitoringsystembackend.repositories.projections.DeviceAuth;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,19 +17,65 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
 
     boolean existsByName(String name);
 
-    @Query("SELECT DISTINCT d FROM Device d " +
-            "LEFT JOIN d.userAccesses ua " +
-            "WHERE d.owner.id = :userId OR ua.user.id = :userId")
-    List<Device> findAllAccessibleByUser(@Param("userId") UUID userId);
+    @Query("""
+        SELECT DISTINCT d FROM Device d
+        LEFT JOIN d.userAccesses ua
+        WHERE(
+            (:keyword IS NULL OR :keyword = '') OR
+            (
+                LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                LOWER(d.ipAddress) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                LOWER(d.macAddress) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            )
+        ) AND (
+            :isGlobalAdmin = true OR
+            d.owner.id = :userId OR
+            ua.user.id = :userId
+        )
+    """)
+    List<Device> searchDevices(
+            @Param("userId") UUID userId,
+            @Param("isGlobalAdmin") boolean isGlobalAdmin,
+            @Param("keyword") String keyword
+    );
 
-    Optional<Device> findByOwnerAndName(User owner, String name);
 
-//    @Query("SELECT d FROM Device d " +
-//            "JOIN d.userAccesses ua " +
-//            "WHERE d.owner.id = :userId OR ua.user.id = :userId AND LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-//    List<Device> findAllOwnedByName(@Param("userId") UUID userId,  @Param("keyword") String keyword);
+    @Query("""
+        SELECT COUNT(d) > 0 FROM Device d
+        LEFT JOIN d.userAccesses ua
+        WHERE d.id = :deviceId
+          AND (d.owner.id = :userId OR ua.user.id = :userId)
+    """)
+    boolean hasReadAccess(@Param("deviceId") UUID deviceId, @Param("userId") UUID userId);
 
-    Device findByApiKey(String apiKey);
+    @Query("""
+        SELECT COUNT(d) > 0 FROM Device d
+        LEFT JOIN d.userAccesses ua
+        WHERE d.id = :deviceId
+          AND (d.owner.id = :userId OR (ua.user.id = :userId AND ua.permissionLevel = 'EDIT'))
+    """)
+    boolean hasEditAccess(@Param("deviceId") UUID deviceId, @Param("userId") UUID userId);
 
-    List<Device> findByOwner(User owner);
+
+    @Query("""
+        SELECT d FROM Device d
+        LEFT JOIN d.userAccesses ua
+        WHERE d.id = :deviceId
+          AND (d.owner.id = :userId OR ua.user.id = :userId)
+    """)
+    Optional<Device> findByIdAndUserAccess(@Param("deviceId") UUID deviceId,
+                                           @Param("userId") UUID userId);
+
+    @Query("""
+        SELECT d FROM Device d
+        LEFT JOIN d.userAccesses ua
+        WHERE d.id = :deviceId
+          AND (d.owner.id = :userId OR (ua.user.id = :userId AND ua.permissionLevel = 'EDIT'))
+    """)
+    Optional<Device> findByIdAndUserEditAccess(@Param("deviceId") UUID deviceId,
+                                               @Param("userId") UUID userId);
+
+    @Query("SELECT d.id as id, d.name as name, d.apiKey as apiKey, d.lastSeen as lastSeen " +
+            "FROM Device d WHERE d.apiKey = :hash")
+    Optional<DeviceAuth> findAuthDataByApiKey(@Param("hash") String hash);
 }

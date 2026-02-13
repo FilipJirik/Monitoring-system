@@ -16,7 +16,7 @@ public interface MetricsHourlyRepository extends JpaRepository<MetricsHourly, UU
     List<? extends BaseMetric> findAllByDeviceIdAndTimestampBetweenOrderByTimestampAsc(UUID deviceId, Instant from, Instant to);
 
     @Query("""
-        SELECT 
+        SELECT
             AVG(m.cpuUsagePercent) as avgCpuUsage,
             AVG(m.cpuTempCelsius) as avgCpuTemp,
             AVG(m.cpuFreqAvgMhz) as avgCpuFreq,  
@@ -31,5 +31,6 @@ public interface MetricsHourlyRepository extends JpaRepository<MetricsHourly, UU
           AND m.timestamp < :to
     """)
     AggregatedMetric findAggregatedValues(UUID deviceId, Instant from, Instant to);
+
     void deleteByTimestampBefore(Instant timestamp);
 }

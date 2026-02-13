@@ -3,7 +3,6 @@ package cz.jirikfi.monitoringsystembackend.mappers;
 import cz.jirikfi.monitoringsystembackend.entities.Device;
 import cz.jirikfi.monitoringsystembackend.models.devices.CreateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.models.devices.DeviceResponse;
-import cz.jirikfi.monitoringsystembackend.models.devices.DeviceWithApiKeyModel;
 import cz.jirikfi.monitoringsystembackend.models.devices.UpdateDeviceModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -34,27 +33,7 @@ public class DeviceMapper {
         .build();
     }
 
-    public DeviceWithApiKeyModel toModelWithApiKey(Device device) {
-        return DeviceWithApiKeyModel.builder()
-                .id(device.getId())
-                .name(device.getName())
-                .operatingSystem(device.getOperatingSystem())
-                .ipAddress(device.getIpAddress())
-                .macAddress(device.getMacAddress())
-                .description(device.getDescription())
-                .latitude(device.getLatitude())
-                .longitude(device.getLongitude())
-                .model(device.getModel())
-                .sshEnabled(device.getSshEnabled())
-                .lastSeen(device.getLastSeen())
-                .createdAt(device.getCreatedAt())
-                .updatedAt(device.getUpdatedAt())
-                .ownerId(device.getOwner().getId())
-                .ownerUsername(device.getOwner().getUsername())
-                .imageFilename(device.getImageFilename())
-                .apiKey(device.getApiKey())
-                .build();
-    }
+
 
     public Device createToEntity(CreateDeviceModel model) {
         return Device.builder()

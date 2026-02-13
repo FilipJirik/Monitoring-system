@@ -1,4 +1,4 @@
-package cz.jirikfi.monitoringsystembackend.security;
+package cz.jirikfi.monitoringsystembackend.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -24,7 +24,7 @@ public class JwtUtil {
     @Value("${jwt.refresh-expiration:604800000}") // Default 7 days in milliseconds
     private long refreshTokenExpiration;
 
-    public String generateToken(UUID userId, String email, String role) {
+    public String generateToken(UUID userId, String username, String email, String role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
@@ -33,6 +33,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("email", email)
+                .claim("username", username)
                 .claim("role", role)
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -40,7 +41,12 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String getEmailFromToken(String token) { // FIXME
+    public String getUsernameFromToken(String token) {
+        Claims claims = parseToken(token);
+        return claims.get("username", String.class);
+    }
+
+    public String getEmailFromToken(String token) {
         Claims claims = parseToken(token);
         return claims.get("email", String.class);
     }

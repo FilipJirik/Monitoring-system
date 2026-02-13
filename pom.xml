@@ -28,6 +28,9 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
     </properties>
     <dependencies>
         <dependency>
@@ -110,13 +113,19 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Hashing API-Keys (SHA-256 algorithm, faster) -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.5.0-jre</version>
+        </dependency>
+
         <!-- Background task handler -->
         <!-- Source: https://mvnrepository.com/artifact/org.jobrunr/jobrunr -->
         <dependency>
             <groupId>org.jobrunr</groupId>
             <artifactId>jobrunr-spring-boot-3-starter</artifactId>
-            <version>8.4.1</version>
-        </dependency>
+            <version>8.4.2</version> </dependency>
         <!-- Caching -->
         <!-- Source: https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine -->
         <dependency>

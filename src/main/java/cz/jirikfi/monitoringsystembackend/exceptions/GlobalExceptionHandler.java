@@ -5,9 +5,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 
 @RestControllerAdvice
@@ -15,59 +18,29 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler({BadRequestException.class, IllegalArgumentException.class})
+    public ResponseEntity<ApiErrorMessage> handleBadRequest(RuntimeException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiErrorMessage> handleNotFound(NotFoundException ex, HttpServletRequest request) {
-        ApiErrorMessage error = new ApiErrorMessage(
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
 
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiErrorMessage> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
-        ApiErrorMessage error = new ApiErrorMessage(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-    }
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ApiErrorMessage> handleUnauthorized(UnauthorizedException ex, HttpServletRequest request) {
-        ApiErrorMessage error = new ApiErrorMessage(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
     }
 
-    @ExceptionHandler(InternalErrorException.class)
-    public ResponseEntity<ApiErrorMessage> handleInternalError(InternalErrorException ex, HttpServletRequest request) {
-        log.error("Internal error", ex);
-        ApiErrorMessage error = new ApiErrorMessage(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    @ExceptionHandler({ForbiddenException.class, AuthorizationDeniedException.class, AccessDeniedException.class})
+    public ResponseEntity<ApiErrorMessage> handleForbidden(Exception ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
 
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ApiErrorMessage> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
-        ApiErrorMessage error = new ApiErrorMessage(
-                HttpStatus.FORBIDDEN.value(),
-                "Forbidden",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiErrorMessage> handleMaxSizeException(MaxUploadSizeExceededException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.PAYLOAD_TOO_LARGE, "File is too large", request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -77,25 +50,28 @@ public class GlobalExceptionHandler {
                 .map(err -> err.getField() + " " + err.getDefaultMessage())
                 .orElse("Validation failed");
 
-        ApiErrorMessage error = new ApiErrorMessage(
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation Error",
-                firstError,
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return buildResponse(HttpStatus.BAD_REQUEST, firstError, request);
+    }
+
+    @ExceptionHandler(InternalErrorException.class)
+    public ResponseEntity<ApiErrorMessage> handleCustomInternalError(InternalErrorException ex, HttpServletRequest request) {
+        log.error("Application Internal error", ex);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorMessage> handleGeneric(Exception ex, HttpServletRequest request) {
-        // Log full stacktrace but do not leak internal details to the client
         log.error("Unhandled exception", ex);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", request);
+    }
+
+    private ResponseEntity<ApiErrorMessage> buildResponse(HttpStatus status, String message, HttpServletRequest request) {
         ApiErrorMessage error = new ApiErrorMessage(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                "An unexpected error occurred",
+                status.value(),
+                status.getReasonPhrase(),
+                message,
                 request.getRequestURI()
         );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        return ResponseEntity.status(status).body(error);
     }
 }

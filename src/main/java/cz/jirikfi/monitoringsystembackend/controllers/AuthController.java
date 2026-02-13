@@ -1,5 +1,6 @@
 package cz.jirikfi.monitoringsystembackend.controllers;
 
+import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
 import cz.jirikfi.monitoringsystembackend.models.auth.AuthResponse;
 import cz.jirikfi.monitoringsystembackend.models.auth.ChangePasswordRequest;
 import cz.jirikfi.monitoringsystembackend.models.auth.LoginModel;
@@ -16,8 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -39,8 +38,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal UUID userId) {
-        authService.logout(userId);
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserPrincipal principal) {
+        authService.logout(principal);
         return ResponseEntity.noContent().build();
     }
 
@@ -51,16 +50,16 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserInfo> getCurrentUser(@AuthenticationPrincipal UUID userId) {
-        UserInfo userInfo = authService.getCurrentUserInfo(userId);
+    public ResponseEntity<UserInfo> getCurrentUser(@AuthenticationPrincipal UserPrincipal principal) {
+        UserInfo userInfo = authService.getCurrentUserInfo(principal);
         return ResponseEntity.ok(userInfo);
     }
 
     @PostMapping("/change-password")
     public ResponseEntity<Void> changePassword(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody ChangePasswordRequest request) {
-        authService.changePassword(userId, request);
+        authService.changePassword(principal, request);
         return ResponseEntity.noContent().build();
     }
 }

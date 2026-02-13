@@ -5,7 +5,7 @@ spring:
   # PostgreSQL database
   datasource:
     url: jdbc:postgresql://localhost:5432/monitoring_db
-    username: postgres
+    username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
 # JPA
@@ -23,6 +23,7 @@ spring:
       max-file-size: 2MB
       max-request-size: 2MB
 
+
 # JWT
 jwt:
   secret: ${JWT_SECRET}
@@ -31,13 +32,13 @@ jwt:
 
 # Error messages
 server:
+  forward-headers-strategy: native
   error:
     include-message: never
     include-binding-errors: never
     include-stacktrace: never
     include-exception: false
 
-# Picture storage configuration
 app:
   pictures:
     upload-dir: uploads/pictures
@@ -45,14 +46,21 @@ app:
   security:
     admin-email: ${APP_ADMIN_EMAIL}
     admin-password: ${APP_ADMIN_PASSWORD}
+    bcrypt-rounds: 12
+  default-server-url: http://localhost:8080
 
 # Background tasks
-org:
-  jobrunr:
-    background-job-server:
-      enabled: true
-    dashboard:
-      enabled: true
-      port: 8000
-    database:
-      skip-create: false
+jobrunr:
+  background-job-server:
+    enabled: true
+  job-scheduler:
+    enabled: true
+  dashboard:
+    enabled: true
+    username: ${APP_ADMIN_EMAIL} # bad solution, but provides some security
+    password: ${APP_ADMIN_PASSWORD} # bad solution, but provides some security
+  database:
+    type: postgres
+    skip-create: false
+    table-prefix: jobrunr_
+

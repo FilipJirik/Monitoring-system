@@ -4,7 +4,7 @@ import cz.jirikfi.monitoringsystembackend.entities.RefreshToken;
 import cz.jirikfi.monitoringsystembackend.entities.User;
 import cz.jirikfi.monitoringsystembackend.exceptions.UnauthorizedException;
 import cz.jirikfi.monitoringsystembackend.repositories.RefreshTokenRepository;
-import cz.jirikfi.monitoringsystembackend.security.JwtUtil;
+import cz.jirikfi.monitoringsystembackend.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

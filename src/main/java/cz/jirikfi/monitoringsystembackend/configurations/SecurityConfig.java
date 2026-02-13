@@ -1,13 +1,14 @@
-package cz.jirikfi.monitoringsystembackend.security;
+package cz.jirikfi.monitoringsystembackend.configurations;
 
 
-import cz.jirikfi.monitoringsystembackend.services.CustomUserDetailsService;
+import cz.jirikfi.monitoringsystembackend.middleware.ApiKeyAuthenticationFilter;
+import cz.jirikfi.monitoringsystembackend.middleware.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,12 +33,10 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CustomUserDetailsService userDetailsService;
+    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
 
-    private final int BCRYPT_DEFAULT_COST = 12;
-
-    //@Value("${app.cors.allowed-origins}")
-    //private List<String> allowedOrigins;
+    @Value("${app.security.bcrypt-rounds:12}")
+    private int BCRYPT_DEFAULT_COST;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -56,12 +55,14 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll() // Open endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/devices/*/metrics").permitAll()
                         .anyRequest().authenticated()
                 )
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 ) // Session is not saved in DB
+                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

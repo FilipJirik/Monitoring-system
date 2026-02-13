@@ -19,6 +19,7 @@ public class SettingsController {
     private final SystemSettingsService systemSettingsService;
     private final SystemSettingsMapper systemSettingsMapper;
 
+    // GET /api/settings GET current global settings
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SettingsResponseModel> getSettings() {
@@ -26,6 +27,7 @@ public class SettingsController {
         return ResponseEntity.ok(systemSettingsMapper.toResponse(settings));
     }
 
+    // PUT /api/settings change global settings
     @PutMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> changeSettings(@Valid @RequestBody SettingsUpdateModel model){

@@ -1,14 +1,12 @@
 package cz.jirikfi.monitoringsystembackend.controllers;
 
-import cz.jirikfi.monitoringsystembackend.entities.Metrics;
-import cz.jirikfi.monitoringsystembackend.entities.User;
+import cz.jirikfi.monitoringsystembackend.entities.DevicePrincipal;
+import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
 import cz.jirikfi.monitoringsystembackend.enums.MetricPeriod;
 import cz.jirikfi.monitoringsystembackend.enums.MetricType;
 import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsHistoryModel;
 import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsCreateModel;
 import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsStatusModel;
-import cz.jirikfi.monitoringsystembackend.services.AlertService;
-import cz.jirikfi.monitoringsystembackend.services.AuthorizationService;
 import cz.jirikfi.monitoringsystembackend.services.MetricsCollectingService;
 import cz.jirikfi.monitoringsystembackend.services.MetricsReadingService;
 import jakarta.validation.Valid;
@@ -25,50 +23,34 @@ import java.util.UUID;
 public class MetricsController {
 
     private final MetricsReadingService metricsReadingService;
-    private final MetricsCollectingService metricsIngresService;
-    private final AuthorizationService authorizationService;
-    private final AlertService alertService;
-
-    private static final String API_KEY_HEADER = "X-API-KEY"; // FIXME: use modern standard
+    private final MetricsCollectingService metricsCollectingService;
 
     @PostMapping
     public ResponseEntity<Void> receiveMetrics(
             @PathVariable UUID deviceId,
-            @RequestHeader(API_KEY_HEADER) String apiKey,
+            @AuthenticationPrincipal DevicePrincipal devicePrincipal,
             @Valid @RequestBody MetricsCreateModel model) {
 
-        Metrics metricEntity = metricsIngresService.saveMetrics(deviceId, apiKey, model);
-        alertService.checkThresholdsAsync(metricEntity);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/history")
-    public ResponseEntity<MetricsHistoryModel> getMetricsHistory(
-            @PathVariable UUID deviceId,
-            @AuthenticationPrincipal User user,
-            @RequestParam MetricType type,
-            @RequestParam(defaultValue = "HOUR_24") MetricPeriod period
-    ) {
-        authorizationService.checkDeviceAccess(user.getId(), deviceId);
-
-        return ResponseEntity.ok(metricsReadingService.getMetricsHistory(deviceId, type, period));
+        metricsCollectingService.processIncomingMetrics(deviceId, devicePrincipal.getDeviceId(), model);
+        return ResponseEntity.accepted().build(); // faster but without acknowledgment
     }
 
     @GetMapping("/latest")
     public ResponseEntity<MetricsStatusModel> getLatestMetrics(
             @PathVariable UUID deviceId,
-            @AuthenticationPrincipal User user) {
-
-        authorizationService.checkDeviceAccess(user.getId(), deviceId);
-
-        MetricsStatusModel latest = metricsReadingService.getLatestMetrics(deviceId);
-        return ResponseEntity.ok(latest);
+            @AuthenticationPrincipal UserPrincipal principal) {
+        MetricsStatusModel metrics = metricsReadingService.getLatestMetrics(principal, deviceId);
+        return ResponseEntity.ok(metrics);
     }
 
-    // GET /api/devices/{id}/getAll/cpu
-    // GET /api/devices/{id}/getAll/{RAM|CPU|GPU|NETWORK|DISK|BATTERY}
-    // GET only RAM | CPU | GPU | NETWORK | DISK | BATTERY metrics by device id
-    // -> for single longterm graphs
-
-    // USER can choose from modes like (AVERAGE OF DAY, WEEK, OF MONTH) to make average of old records
+    @GetMapping("/history")
+    public ResponseEntity<MetricsHistoryModel> getMetricsHistory(
+            @PathVariable UUID deviceId,
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam MetricType type,
+            @RequestParam(defaultValue = "HOUR_24") MetricPeriod period
+    ) {
+        MetricsHistoryModel history = metricsReadingService.getMetricsHistory(principal, deviceId, type, period);
+        return ResponseEntity.ok(history);
+    }
 }

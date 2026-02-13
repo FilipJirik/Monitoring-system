@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -31,13 +32,15 @@ public class ImageService {
 
     private Path uploadPath;
 
+    private static final List<String> ALLOWED_EXTENSIONS = List.of(".jpg", ".jpeg", ".png", ".webp");
+    private static final List<String> ALLOWED_MIME_TYPES = List.of("image/jpeg", "image/png", "image/webp");
+
     @PostConstruct
     public void init() {
         try {
             uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
             Files.createDirectories(uploadPath);
             log.info("Image upload directory initialized: {}", uploadPath);
-
             ensureDefaultPictureExists();
         } catch (IOException e) {
             log.error("Failed to initialize image upload directory", e);
@@ -77,47 +80,48 @@ public class ImageService {
     }
 
     public String saveImage(MultipartFile file) {
-        if (file.isEmpty()) {
-            throw new InternalErrorException("Cannot save empty file");
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Cannot save empty file.");
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_MIME_TYPES.contains(contentType)) {
+            throw new IllegalArgumentException("Invalid file type. Allowed: JPG, PNG, WEBP.");
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        String extension = getExtension(originalFilename);
+
+        if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
+            throw new IllegalArgumentException("Invalid file extension.");
         }
 
         try {
-            String originalFilename = file.getOriginalFilename();
-
-            String extension = ".png"; // Fallback
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
+            // generate safe name
             String filename = UUID.randomUUID() + extension;
+            Path targetLocation = this.uploadPath.resolve(filename);
 
-            Path filePath = uploadPath.resolve(filename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            log.info("Saved image file: {}", filename);
+            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING); // save
+            log.info("Image saved: {}", filename);
 
             return filename;
-
         } catch (IOException e) {
-            log.error("Failed to save image file", e);
-            throw new InternalErrorException("Failed to save image: " + e.getMessage());
+            log.error("Failed to store file", e);
+            throw new InternalErrorException("Failed to store file.");
         }
     }
 
     public void deleteImage(String filename) {
         if (filename == null || filename.equals(defaultFilename)) {
-            throw new InternalErrorException("Cannot delete default image");
+            return;
         }
 
         try {
             Path filePath = uploadPath.resolve(filename);
-            if (Files.exists(filePath)) {
-                Files.delete(filePath);
-                log.info("Deleted image file: {}", filename);
-            } else {
-                log.warn("Image file not found for deletion: {}", filename);
-            }
+            Files.deleteIfExists(filePath);
+            log.info("Deleted image: {}", filename);
         } catch (IOException e) {
-            log.error("Failed to delete image file: {}", filename, e);
-            throw new InternalErrorException("Failed to delete image file");
+            log.warn("Failed to delete image: {}", filename);
         }
     }
 
@@ -157,6 +161,13 @@ public class ImageService {
             log.error("Failed to load default image resource", e);
             throw new InternalErrorException("Failed to load default image");
         }
+    }
+
+    private String getExtension(String filename) {
+        if (filename != null && filename.lastIndexOf(".") > 0) {
+            return filename.substring(filename.lastIndexOf("."));
+        }
+        return ".png"; // Fallback
     }
 
     public String getContentType(String filename) {

@@ -15,10 +15,14 @@ public class CacheConfig {
 
     public static final String DEVICE_THRESHOLDS = "deviceThresholds";
     public static final String SYSTEM_SETTINGS = "systemSettings";
+    public static final String DEVICE_API_KEYS = "deviceApiKeys";
 
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager(DEVICE_THRESHOLDS, SYSTEM_SETTINGS);
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager(
+                DEVICE_THRESHOLDS,
+                SYSTEM_SETTINGS,
+                DEVICE_API_KEYS);
         cacheManager.setCaffeine(caffeineCacheBuilder());
         return cacheManager;
     }

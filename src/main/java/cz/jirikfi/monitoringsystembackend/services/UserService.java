@@ -117,38 +117,15 @@ public class UserService {
         return userDeviceAccess;
     }
 
-//    public Device createDevice(UUID userId, CreateDeviceModel model) {
-//        User user = getUser(userId);
-//
-//        Device device = Device.builder()
-//                .name(model.getName())
-//                .operatingSystem(model.getOperatingSystem())
-//                .ipAddress(model.getIpAddress())
-//                .macAddress(model.getMacAddress())
-//                .description(model.getDescription())
-//                .latitude(model.getLatitude())
-//                .longitude(model.getLongitude())
-//                .model(model.getModel())
-//                .sshEnabled(model.getSshEnabled())
-//                .allowedUsers(new HashSet<>() )
-//                .owner(user)
-//                .picture(pictureService.getDefaultPicture())
-//                .build();
-//
-//        device.getAllowedUsers().add(user); // owner has rights to access device
-//
-//        deviceDatabase.save(device);
-//        return device;
-//    }
-
-//    public List<Device> getUserDevices(UUID userId) {
-//        List<Device> devices = deviceRepository.findDevicesByUserAccess(userId);
-//        return devices;
-//    }
     @Transactional(readOnly = true)
     public List<UserResponse> getUsersByKeyword(String keyword) {
-        List<User> users = userRepository.findUsersByKeyword(keyword);
+        List<User> users;
 
+        if (keyword == null || keyword.isBlank()) {
+             users = userRepository.findAll();
+        } else {
+            users = userRepository.findUsersByKeyword(keyword);
+        }
         return users.stream()
                 .map(userMapper::toResponse)
                 .toList();

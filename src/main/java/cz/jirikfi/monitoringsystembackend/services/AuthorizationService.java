@@ -1,7 +1,9 @@
 package cz.jirikfi.monitoringsystembackend.services;
 
 import cz.jirikfi.monitoringsystembackend.entities.Device;
+import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
 import cz.jirikfi.monitoringsystembackend.enums.PermissionLevel;
+import cz.jirikfi.monitoringsystembackend.enums.Role;
 import cz.jirikfi.monitoringsystembackend.exceptions.ForbiddenException;
 import cz.jirikfi.monitoringsystembackend.exceptions.NotFoundException;
 import cz.jirikfi.monitoringsystembackend.repositories.DeviceRepository;
@@ -18,88 +20,68 @@ public class AuthorizationService {
     private final DeviceRepository deviceRepository;
     private final UserDeviceAccessRepository userDeviceAccessRepository;
 
-    // has any permissions?
-    @Transactional(readOnly = true)
-    public void checkDeviceAccess(UUID userId, UUID deviceId) {
-        Device device = deviceRepository.findById(deviceId)
-                .orElseThrow(() -> new NotFoundException("Device not found: " + deviceId));
-
-        if (device.getOwner().getId().equals(userId)) {
-            return;
-        }
-        boolean hasAccess = userDeviceAccessRepository.existsByUserIdAndDeviceId(userId, deviceId);
-        if (hasAccess) {
+    public void verifyEditPermission(UserPrincipal principal, Device device) {
+        if (principal.getRole() == Role.ADMIN || device.getOwner().getId().equals(principal.getId())) {
             return;
         }
 
-        throw new ForbiddenException("You don't have permission to access this device");
-    }
-    @Transactional(readOnly = true)
-    public void checkDeviceWritePermission(UUID userId, UUID deviceId) {
-        Device device = deviceRepository.findById(deviceId)
-                .orElseThrow(() -> new NotFoundException("Device not found: " + deviceId));
-
-        if (device.getOwner().getId().equals(userId)) { // Is owner - has full access
-            return;
-        }
         PermissionLevel permission = userDeviceAccessRepository
-                .findPermissionLevel(userId, deviceId);
+                .findPermissionLevel(principal.getId(), device.getId());
 
-        if (permission != PermissionLevel.WRITE && permission != PermissionLevel.ADMIN) {
+        if (permission == null || permission == PermissionLevel.READ) {
             throw new ForbiddenException("You don't have permission to edit this device");
         }
     }
 
     @Transactional(readOnly = true)
-    public void checkDeviceOwnership(UUID userId, UUID deviceId) {
-        Device device = deviceRepository.findById(deviceId)
-                .orElseThrow(() -> new NotFoundException("Device not found: " + deviceId));
+    public void verifyReadAccess(UUID deviceId, UserPrincipal principal) {
+        if (principal.getRole() == Role.ADMIN) {
+            if (!deviceRepository.existsById(deviceId)) {
+                throw new NotFoundException("Device not found");
+            }
+            return;
+        }
 
-        if (!device.getOwner().getId().equals(userId)) {
-            throw new ForbiddenException("Only the device owner can perform this action");
+        if (!deviceRepository.hasReadAccess(deviceId, principal.getId())) {
+            throw new ForbiddenException("You don't have permission to access this device");
         }
     }
+
     @Transactional(readOnly = true)
-    public PermissionLevel getPermissionLevel(UUID userId, UUID deviceId) {
-        Device device = deviceRepository.findById(deviceId)
-                .orElseThrow(() -> new NotFoundException("Device not found: " + deviceId));
-
-        if (device.getOwner().getId().equals(userId)) {
-            // Owner has the highest permission level (equivalent to ADMIN)
-            return PermissionLevel.ADMIN;
+    public void verifyEditAccess(UUID deviceId, UserPrincipal principal) {
+        if (principal.getRole() == Role.ADMIN) {
+            if (!deviceRepository.existsById(deviceId)) {
+                throw new NotFoundException("Device not found");
+            }
+            return;
         }
-        PermissionLevel permission = userDeviceAccessRepository
-                .findPermissionLevel(userId, deviceId);
-        
-        // Return null if no access, so callers can check for null
-        return permission;
+
+        if (!deviceRepository.hasEditAccess(deviceId, principal.getId())) {
+            throw new ForbiddenException("You don't have permission to edit this device");
+        }
     }
-    
+
     @Transactional(readOnly = true)
-    public boolean hasReadAccess(UUID userId, UUID deviceId) {
-        Device device = deviceRepository.findById(deviceId)
-                .orElseThrow(() -> new NotFoundException("Device not found: " + deviceId));
-
-        if (device.getOwner().getId().equals(userId)) {
-            return true; // Owner has all permissions
+    public Device getDeviceWithReadAccess(UUID deviceId, UserPrincipal principal) {
+        if (principal.getRole() == Role.ADMIN) {
+            return deviceRepository.findById(deviceId)
+                    .orElseThrow(() -> new NotFoundException("Device not found"));
         }
-        return userDeviceAccessRepository.existsByUserIdAndDeviceId(userId, deviceId);
+
+        return deviceRepository.findByIdAndUserAccess(deviceId, principal.getId())
+                .orElseThrow(() -> new ForbiddenException("Device not found or access denied"));
     }
-    
+
     @Transactional(readOnly = true)
-    public boolean hasWriteAccess(UUID userId, UUID deviceId) {
-        Device device = deviceRepository.findById(deviceId)
-                .orElseThrow(() -> new NotFoundException("Device not found: " + deviceId));
-
-        if (device.getOwner().getId().equals(userId)) {
-            return true; // Owner has all permissions
+    public Device getDeviceWithEditAccess(UUID deviceId, UserPrincipal principal) {
+        if (principal.getRole() == Role.ADMIN) {
+            return deviceRepository.findById(deviceId)
+                    .orElseThrow(() -> new NotFoundException("Device not found"));
         }
-        PermissionLevel permission = userDeviceAccessRepository
-                .findPermissionLevel(userId, deviceId);
-        
-        return permission == PermissionLevel.WRITE || permission == PermissionLevel.ADMIN;
-    }
 
+        return deviceRepository.findByIdAndUserEditAccess(deviceId, principal.getId())
+                .orElseThrow(() -> new ForbiddenException("You don't have permission to edit this device"));
+    }
 
 
 }

@@ -17,9 +17,5 @@ public interface UserDeviceAccessRepository extends JpaRepository<UserDeviceAcce
 
     PermissionLevel findPermissionLevel(@Param("userId") UUID userId,
                                                   @Param("deviceId") UUID deviceId);
-
-    boolean existsByUserIdAndDeviceId(UUID userId, UUID deviceId);
-
-
 }
 

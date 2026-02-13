@@ -2,6 +2,7 @@ package cz.jirikfi.monitoringsystembackend.services;
 
 import cz.jirikfi.monitoringsystembackend.entities.RefreshToken;
 import cz.jirikfi.monitoringsystembackend.entities.User;
+import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
 import cz.jirikfi.monitoringsystembackend.exceptions.BadRequestException;
 import cz.jirikfi.monitoringsystembackend.exceptions.NotFoundException;
 import cz.jirikfi.monitoringsystembackend.exceptions.UnauthorizedException;
@@ -13,7 +14,7 @@ import cz.jirikfi.monitoringsystembackend.models.auth.RefreshTokenRequest;
 import cz.jirikfi.monitoringsystembackend.models.auth.RegisterModel;
 import cz.jirikfi.monitoringsystembackend.models.auth.UserInfo;
 import cz.jirikfi.monitoringsystembackend.repositories.UserRepository;
-import cz.jirikfi.monitoringsystembackend.security.JwtUtil;
+import cz.jirikfi.monitoringsystembackend.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,8 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -57,7 +56,7 @@ public class AuthService {
 
         userRepository.save(user);
 
-        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
         String refreshToken = refreshTokenService.createRefreshToken(user);
 
         log.info("User registered: {} with email: {}", user.getUsername(), user.getEmail());
@@ -74,11 +73,15 @@ public class AuthService {
                             request.getPassword()
                     )
             );
-            User user = (User) authentication.getPrincipal();
+            UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+
+            User user = userRepository.findById(principal.getId())
+                    .orElseThrow(() -> new UnauthorizedException("User account not found"));
+
             user.setLastLogin(Instant.now());
             userRepository.save(user);
 
-            String token = jwtUtil.generateToken(user.getId(), user.getEmail(), String.valueOf(user.getRole()));
+            String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getEmail(), String.valueOf(user.getRole()));
             String refreshToken = refreshTokenService.createRefreshToken(user);
 
             log.info("User logged in: {}", user.getEmail());
@@ -90,15 +93,15 @@ public class AuthService {
         }
     }
     @Transactional
-    public void logout(UUID userId) {
-        refreshTokenService.deleteByUserId(userId);
-        log.info("User logged out: {}", userId);
+    public void logout(UserPrincipal principal) {
+        refreshTokenService.deleteByUserId(principal.getId());
+        log.info("User logged out: {}", principal.getId());
     }
 
     @Transactional
-    public void changePassword(UUID userId, ChangePasswordRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found: " + userId));
+    public void changePassword(UserPrincipal principal, ChangePasswordRequest request) {
+        User user = userRepository.findById(principal.getId())
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new UnauthorizedException("Current password is incorrect");
@@ -107,16 +110,14 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        log.info("Password changed for user: {}", user.getUsername());
+        log.info("Password changed for user: {}", principal.getUsername());
     }
 
     @Transactional(readOnly = true)
-    public UserInfo getCurrentUserInfo(UUID userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found: " + userId));
-
-        return authMapper.toUserInfo(user);
+    public UserInfo getCurrentUserInfo(UserPrincipal principal) {
+        return new UserInfo(principal.getId(), principal.getUsername(), principal.getEmail(), principal.getRole());
     }
+
 
     @Transactional
     public AuthResponse refreshToken(RefreshTokenRequest request) {
@@ -133,7 +134,7 @@ public class AuthService {
 
         User user = currentRefreshToken.getUser();
 
-        String newAccessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        String newAccessToken = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
         String newRefreshToken = refreshTokenService.createRefreshToken(user);
 
         return authMapper.toAuthResponse(user, newAccessToken, newRefreshToken);

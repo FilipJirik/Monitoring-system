@@ -4,8 +4,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.springframework.data.domain.Persistable;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @MappedSuperclass
 @Getter
@@ -13,7 +15,7 @@ import java.time.Instant;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class BaseMetric {
+public abstract class BaseMetric implements Persistable<UUID> {
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private Instant timestamp = Instant.now();
@@ -41,4 +43,9 @@ public abstract class BaseMetric {
 
     @Column(name = "uptime_seconds")
     private Long uptimeSeconds;
+
+    @Override
+    public boolean isNew() { // used to inform Hibernate that it will never be updated - faster
+        return true;
+    }
 }

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -57,9 +58,9 @@ public class DataSeeder implements CommandLineRunner {
 
     private void seedAdmin() {
 
-        User user = userRepository.findByEmail(adminEmail);
+        Optional<User> user = userRepository.findByEmail(adminEmail);
 
-        if (user == null) {
+        if (user.isEmpty()) {
             log.info("Seeding default Admin User ({})", adminEmail);
 
             User admin = User.builder()

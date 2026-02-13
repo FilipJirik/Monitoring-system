@@ -25,7 +25,8 @@ import java.util.UUID;
 public class UsersController {
     private final UserService userService;
 
-    // CRUD
+    // USERS
+
     // Create
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -43,7 +44,7 @@ public class UsersController {
     // Update
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody @Valid UpdateUserModel model) {
+    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody @Valid UpdateUserModel model) { // FIXME: Add logic for changing role
         User user = userService.updateUser(id, model);
         return ResponseEntity.ok().body(user);
     }
@@ -61,11 +62,8 @@ public class UsersController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>> getUsersByKeyword(@RequestParam(required = false) String keyword) {
-        List<UserResponse> users = userService.getUsersByKeyword(keyword);
 
-        if (users.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
+        List<UserResponse> users = userService.getUsersByKeyword(keyword);
         return ResponseEntity.ok().body(users);
     }
 
@@ -96,18 +94,4 @@ public class UsersController {
         userService.revokeAccess(userId, deviceId);
         return ResponseEntity.noContent().build();
     }
-
-    // Users devices
-
-    // GET /api/users/{userId}/devices getUserDevices
-//    @GetMapping("/{userId}/devices")
-//    public ResponseEntity<List<Device>> getUserDevices(@PathVariable UUID userId) {
-//        List<Device> devices = userService.getUserDevices(userId);
-//        return ResponseEntity.ok().body(devices);
-//    }
-
-
-
-
-
 }
