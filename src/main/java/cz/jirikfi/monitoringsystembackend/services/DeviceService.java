@@ -3,7 +3,7 @@ package cz.jirikfi.monitoringsystembackend.services;
 import cz.jirikfi.monitoringsystembackend.entities.Device;
 import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
 import cz.jirikfi.monitoringsystembackend.enums.Role;
-import cz.jirikfi.monitoringsystembackend.exceptions.BadRequestException;
+import cz.jirikfi.monitoringsystembackend.exceptions.ConflictException;
 import cz.jirikfi.monitoringsystembackend.mappers.DeviceMapper;
 import cz.jirikfi.monitoringsystembackend.models.devices.CreateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.models.devices.DeviceWithApiKeyModel;
@@ -14,12 +14,13 @@ import cz.jirikfi.monitoringsystembackend.repositories.UserRepository;
 import cz.jirikfi.monitoringsystembackend.utils.ServerUrlUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -40,7 +41,7 @@ public class DeviceService {
     @Transactional
     public DeviceWithApiKeyModel createDevice(UserPrincipal principal, CreateDeviceModel model) {
         if (deviceRepository.existsByName(model.getName()))
-            throw new BadRequestException("Device with name " + model.getName() + " already exists");
+            throw new ConflictException("Device with name " + model.getName() + " already exists");
 
         Device device = deviceMapper.createToEntity(model);
         device.setOwner(userRepository.getReferenceById(principal.getId()));
@@ -144,16 +145,13 @@ public class DeviceService {
         return response;
     }
 
-    @Transactional
-    public List<DeviceResponse> getAllAccessibleDevices(UserPrincipal principal, String keyword) { ///  add pagination
+    @Transactional(readOnly = true)
+    public Page<DeviceResponse> getAllAccessibleDevices(UserPrincipal principal, String keyword, Pageable pageable) {
         String searchKey = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
         boolean isAdmin = principal.getRole() == Role.ADMIN;
 
-        List<Device> devices = deviceRepository.searchDevices(principal.getId(), isAdmin, searchKey);
-
-        return devices.stream()
-                .map(deviceMapper::toResponse)
-                .toList();
+        return deviceRepository.searchDevices(principal.getId(), isAdmin, searchKey, pageable)
+                .map(deviceMapper::toResponse);
     }
 
     private void tryDeleteDeviceImage(String imageFilename) {

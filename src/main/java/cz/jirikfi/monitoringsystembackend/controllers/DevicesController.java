@@ -8,13 +8,15 @@ import cz.jirikfi.monitoringsystembackend.models.devices.UpdateDeviceModel;
 import cz.jirikfi.monitoringsystembackend.services.DeviceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,7 +25,7 @@ import java.util.UUID;
 public class DevicesController {
     private final DeviceService deviceService;
 
-    private final org.slf4j.Logger _logger = org.slf4j.LoggerFactory.getLogger(DeviceService.class);
+    private final org.slf4j.Logger _logger = org.slf4j.LoggerFactory.getLogger(DevicesController.class);
     // DEVICES
 
     // POST /api/devices createDevice
@@ -69,11 +71,12 @@ public class DevicesController {
 
     // GET /api/devices GET all devices
     @GetMapping
-    public ResponseEntity<List<DeviceResponse>> getAllDevices(
+    public ResponseEntity<Page<DeviceResponse>> getAllDevices(
             @RequestParam(required = false) String keyword,
-            @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PageableDefault(size = 20) Pageable pageable) {
 
-        List<DeviceResponse> devices = deviceService.getAllAccessibleDevices(principal, keyword);
+        Page<DeviceResponse> devices = deviceService.getAllAccessibleDevices(principal, keyword, pageable);
         return ResponseEntity.ok(devices);
     }
 

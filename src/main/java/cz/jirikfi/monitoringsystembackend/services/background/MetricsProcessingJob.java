@@ -1,4 +1,4 @@
-package cz.jirikfi.monitoringsystembackend.components;
+package cz.jirikfi.monitoringsystembackend.services.background;
 
 import cz.jirikfi.monitoringsystembackend.entities.*;
 import cz.jirikfi.monitoringsystembackend.mappers.MetricAggregationMapper;
@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.function.Supplier;
 
 @Service
 @RequiredArgsConstructor

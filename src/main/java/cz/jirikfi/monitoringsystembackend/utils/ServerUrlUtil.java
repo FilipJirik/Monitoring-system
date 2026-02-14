@@ -13,7 +13,7 @@ public class ServerUrlUtil {
 
     private static final String SETUP_COMMAND_STRUCTURE = "./Monitoring-system-client-service setup --server-url=%s --device-id=%s --api-key=%s";
 
-    @Value("${default-server-url:http://localhost:8080}")
+    @Value("${app.default-server-url:http://localhost:8080}")
     private String configuredServerUrl;
 
     private String resolveServerUrl() {

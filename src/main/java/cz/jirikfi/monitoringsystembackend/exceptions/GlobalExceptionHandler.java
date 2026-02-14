@@ -38,6 +38,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiErrorMessage> handleConflict(ConflictException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiErrorMessage> handleMaxSizeException(MaxUploadSizeExceededException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.PAYLOAD_TOO_LARGE, "File is too large", request);

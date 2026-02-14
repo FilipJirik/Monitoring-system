@@ -4,6 +4,7 @@ import cz.jirikfi.monitoringsystembackend.entities.User;
 import cz.jirikfi.monitoringsystembackend.entities.UserDeviceAccess;
 import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.CreatePermissionRequest;
 import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.UpdatePermissionRequest;
+import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.UserDeviceAccessModel;
 import cz.jirikfi.monitoringsystembackend.models.users.CreateUserModel;
 import cz.jirikfi.monitoringsystembackend.models.users.UserResponse;
 import cz.jirikfi.monitoringsystembackend.models.users.UpdateUserModel;
@@ -11,12 +12,14 @@ import cz.jirikfi.monitoringsystembackend.services.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -44,7 +47,7 @@ public class UsersController {
     // Update
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody @Valid UpdateUserModel model) { // FIXME: Add logic for changing role
+    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody @Valid UpdateUserModel model) {
         User user = userService.updateUser(id, model);
         return ResponseEntity.ok().body(user);
     }
@@ -61,9 +64,11 @@ public class UsersController {
     // use: for adding users when looking for contact emails for device
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getUsersByKeyword(@RequestParam(required = false) String keyword) {
+    public ResponseEntity<Page<UserResponse>> getUsersByKeyword(
+            @RequestParam(required = false) String keyword,
+            @PageableDefault(size = 20) Pageable pageable) {
 
-        List<UserResponse> users = userService.getUsersByKeyword(keyword);
+        Page<UserResponse> users = userService.getUsersByKeyword(keyword, pageable);
         return ResponseEntity.ok().body(users);
     }
 
@@ -72,10 +77,10 @@ public class UsersController {
     // POST /api/users/{userId}/devices/{deviceId} grantAccessForDeviceToUser
     @PostMapping("/{userId}/devices/{deviceId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDeviceAccess> grantAccessForDeviceToUser(@PathVariable UUID userId, @PathVariable UUID deviceId,
-                                                     @RequestBody @Valid CreatePermissionRequest model) {
-        UserDeviceAccess UserDeviceAccess = userService.grantAccess(userId, deviceId, model);
-        return ResponseEntity.ok().body(UserDeviceAccess);
+    public ResponseEntity<UserDeviceAccessModel> grantAccessForDeviceToUser(@PathVariable UUID userId, @PathVariable UUID deviceId,
+                                                                            @RequestBody @Valid CreatePermissionRequest model) {
+        userService.grantAccess(userId, deviceId, model);
+        return ResponseEntity.noContent().build();
     }
 
     // UPDATE /api/users/{userId}/devices/{deviceId} updatePermissions
@@ -83,8 +88,8 @@ public class UsersController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDeviceAccess> updatePermissions(@PathVariable UUID userId, @PathVariable UUID deviceId,
                                                               @RequestBody @Valid UpdatePermissionRequest model) {
-        UserDeviceAccess UserDeviceAccess = userService.changePermission(userId, deviceId, model);
-        return ResponseEntity.ok().body(UserDeviceAccess);
+        userService.changePermission(userId, deviceId, model);
+        return ResponseEntity.noContent().build();
     }
 
     // DELETE /api/users/{userId}/devices/{deviceId} revokeAccessForDeviceToUser

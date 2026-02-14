@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.UriTemplate;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -27,6 +28,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     public static final String BEARER_ = "Bearer ";
     private final JwtUtil jwtUtil;
+
+    private static final UriTemplate METRICS_ENDPOINT_TEMPLATE = new UriTemplate("/api/devices/{deviceId}/metrics");
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getMethod().equals("POST") &&
+                METRICS_ENDPOINT_TEMPLATE.matches(request.getRequestURI());
+    }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,

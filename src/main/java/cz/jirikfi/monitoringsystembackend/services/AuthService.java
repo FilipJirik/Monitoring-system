@@ -3,7 +3,7 @@ package cz.jirikfi.monitoringsystembackend.services;
 import cz.jirikfi.monitoringsystembackend.entities.RefreshToken;
 import cz.jirikfi.monitoringsystembackend.entities.User;
 import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
-import cz.jirikfi.monitoringsystembackend.exceptions.BadRequestException;
+import cz.jirikfi.monitoringsystembackend.exceptions.ConflictException;
 import cz.jirikfi.monitoringsystembackend.exceptions.NotFoundException;
 import cz.jirikfi.monitoringsystembackend.exceptions.UnauthorizedException;
 import cz.jirikfi.monitoringsystembackend.mappers.AuthMapper;
@@ -42,10 +42,10 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterModel request) {
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new BadRequestException("Username already exists");
+            throw new ConflictException("Username already exists");
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BadRequestException("Email already exists");
+            throw new ConflictException("Email already exists");
         }
 
         User user = User.builder()

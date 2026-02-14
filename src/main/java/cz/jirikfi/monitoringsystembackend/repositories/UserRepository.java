@@ -2,6 +2,8 @@ package cz.jirikfi.monitoringsystembackend.repositories;
 
 import cz.jirikfi.monitoringsystembackend.entities.User;
 import cz.jirikfi.monitoringsystembackend.repositories.projections.RecipientStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,9 +17,10 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
 
     @Query("SELECT u FROM User u " +
-            "WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "WHERE :keyword IS NULL OR " +
+            "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    List<User> findUsersByKeyword(@Param("keyword") String keyword);
+    Page<User> findUsersByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     Optional<User> findByEmail(String email);
 
@@ -25,7 +28,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByEmail(String email);
 
-    @Query("""
+    @Query(value = """
         SELECT
             u.id AS userId,
             u.username AS username,
@@ -35,12 +38,24 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             (CASE WHEN ar.id IS NOT NULL THEN true ELSE false END) AS isRecipient,
             ar.notifyEmail AS notifyEmail,
             ar.notifyFrontend AS notifyFrontend
-
         FROM User u
         LEFT JOIN AlertRecipient ar ON ar.user.id = u.id AND ar.device.id = :deviceId
         LEFT JOIN u.deviceAccesses ua ON ua.device.id = :deviceId
         LEFT JOIN Device d ON d.id = :deviceId
-
+        WHERE
+        (
+            ua.device.id = :deviceId
+            OR d.owner.id = u.id
+            OR u.role = 'ADMIN'
+            OR ar.id IS NOT NULL
+        )
+    """,
+    countQuery = """
+        SELECT COUNT(u)
+        FROM User u
+        LEFT JOIN AlertRecipient ar ON ar.user.id = u.id AND ar.device.id = :deviceId
+        LEFT JOIN u.deviceAccesses ua ON ua.device.id = :deviceId
+        LEFT JOIN Device d ON d.id = :deviceId
         WHERE
         (
             ua.device.id = :deviceId
@@ -49,5 +64,5 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             OR ar.id IS NOT NULL
         )
     """)
-    List<RecipientStatus> findPotentialRecipients(@Param("deviceId") UUID deviceId);
+    Page<RecipientStatus> findPotentialRecipients(@Param("deviceId") UUID deviceId, Pageable pageable);
 }

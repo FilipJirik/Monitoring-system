@@ -23,6 +23,19 @@ spring:
       max-file-size: 2MB
       max-request-size: 2MB
 
+# Email connection
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 
 # JWT
 jwt:

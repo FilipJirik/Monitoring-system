@@ -4,6 +4,7 @@ import cz.jirikfi.monitoringsystembackend.entities.Device;
 import cz.jirikfi.monitoringsystembackend.entities.User;
 import cz.jirikfi.monitoringsystembackend.entities.UserDeviceAccess;
 import cz.jirikfi.monitoringsystembackend.exceptions.BadRequestException;
+import cz.jirikfi.monitoringsystembackend.exceptions.ConflictException;
 import cz.jirikfi.monitoringsystembackend.exceptions.NotFoundException;
 import cz.jirikfi.monitoringsystembackend.mappers.UserMapper;
 import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.CreatePermissionRequest;
@@ -15,12 +16,13 @@ import cz.jirikfi.monitoringsystembackend.repositories.DeviceRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.UserDeviceAccessRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -45,7 +47,7 @@ public class UserService {
     @Transactional
     public User createUser(CreateUserModel model) {
         if (userRepository.existsByEmail(model.getEmail())) {
-            throw new BadRequestException("User with email " + model.getUsername() + " already exists");
+            throw new ConflictException("User with email " + model.getUsername() + " already exists");
         }
 
         User user = User.builder()
@@ -62,7 +64,7 @@ public class UserService {
         User user = getUser(id);
 
         if (user.getEmail().equals(model.getEmail())) {
-            throw new BadRequestException("User with email " + model.getUsername() + " already exists");
+            throw new ConflictException("User with email " + model.getUsername() + " already exists");
         }
 
         if (model.getUsername() != null) user.setUsername(model.getUsername());
@@ -82,7 +84,13 @@ public class UserService {
         }
     }
     @Transactional
-    public UserDeviceAccess grantAccess(UUID userId, UUID deviceId, CreatePermissionRequest model) {
+    public void grantAccess(UUID userId, UUID deviceId, CreatePermissionRequest model) {
+        Optional<UserDeviceAccess> existingAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId);
+
+        if (existingAccess.isPresent()) {
+            throw new ConflictException("User " + userId + " already has access to device " + deviceId);
+        }
+
         User user = getUser(userId);
         Device device = getDevice(deviceId);
 
@@ -93,42 +101,30 @@ public class UserService {
                 .build();
 
         userDeviceAccessRepository.save(userDeviceAccess);
-        return userDeviceAccess;
     }
     @Transactional
-    public void revokeAccess(UUID userId, UUID deviceId) {
-        UserDeviceAccess userDeviceAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId);
+    public void changePermission(UUID userId, UUID deviceId, UpdatePermissionRequest model) {
+        UserDeviceAccess userDeviceAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId)
+                .orElseThrow(() -> new BadRequestException("User " + userId + " doesn't have access to device " + deviceId));
 
-        if (userDeviceAccess == null){
-            throw new BadRequestException("User " + userId + " doesn't have access to device " + deviceId);
-        }
-        userDeviceAccessRepository.delete(userDeviceAccess);
-    }
-    @Transactional
-    public UserDeviceAccess changePermission(UUID userId, UUID deviceId, UpdatePermissionRequest model) {
-        UserDeviceAccess userDeviceAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId);
-
-        if (userDeviceAccess == null){
-            throw new BadRequestException("User " + userId + " doesn't have access to device " + deviceId);
-        }
         userDeviceAccess.setPermissionLevel(model.getPermissionLevel());
         userDeviceAccessRepository.save(userDeviceAccess);
+    }
 
-        return userDeviceAccess;
+    @Transactional
+    public void revokeAccess(UUID userId, UUID deviceId) {
+        UserDeviceAccess userDeviceAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId)
+                .orElseThrow(() -> new BadRequestException("User " + userId + " doesn't have access to device " + deviceId));
+
+        userDeviceAccessRepository.delete(userDeviceAccess);
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponse> getUsersByKeyword(String keyword) {
-        List<User> users;
+    public Page<UserResponse> getUsersByKeyword(String keyword, Pageable pageable) {
+        String searchKey = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
 
-        if (keyword == null || keyword.isBlank()) {
-             users = userRepository.findAll();
-        } else {
-            users = userRepository.findUsersByKeyword(keyword);
-        }
-        return users.stream()
-                .map(userMapper::toResponse)
-                .toList();
+        return userRepository.findUsersByKeyword(searchKey, pageable)
+                .map(userMapper::toResponse);
     }
 
 }

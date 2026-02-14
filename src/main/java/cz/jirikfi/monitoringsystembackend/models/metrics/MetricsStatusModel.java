@@ -17,6 +17,7 @@ public class MetricsStatusModel {
     private Long uptimeSeconds;
 
     private Double currentCpuUsage;
+    private Long currentCpuFreqMhz;
     private Double currentRamUsage;
     private Double currentDiskUsage;
     private Double currentCpuTemp;

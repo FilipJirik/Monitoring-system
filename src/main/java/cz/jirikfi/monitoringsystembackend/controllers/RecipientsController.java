@@ -8,12 +8,14 @@ import cz.jirikfi.monitoringsystembackend.models.recipients.UpdateRecipientModel
 import cz.jirikfi.monitoringsystembackend.services.AlertRecipientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -37,13 +39,14 @@ public class RecipientsController {
     }
 
     // GET /api/devices/{id}/recipients?all=true
-    @GetMapping
-    public ResponseEntity<List<RecipientStatusModel>> getRecipients(
+    @GetMapping()
+    public ResponseEntity<Page<RecipientStatusModel>> getRecipients(
             @PathVariable UUID deviceId,
             @RequestParam(name = "all", required = false, defaultValue = "false") boolean includeAll,
-            @AuthenticationPrincipal UserPrincipal principal) {
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PageableDefault(size = 20) Pageable pageable) {
 
-        List<RecipientStatusModel> result = alertRecipientService.getRecipientsWithStatus(principal, deviceId, includeAll);
+        Page<RecipientStatusModel> result = alertRecipientService.getRecipientsWithStatus(principal, deviceId, includeAll, pageable);
         return ResponseEntity.ok(result);
     }
 

@@ -3,6 +3,8 @@ package cz.jirikfi.monitoringsystembackend.repositories;
 import cz.jirikfi.monitoringsystembackend.entities.Device;
 import cz.jirikfi.monitoringsystembackend.entities.User;
 import cz.jirikfi.monitoringsystembackend.repositories.projections.DeviceAuth;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,7 +19,7 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
 
     boolean existsByName(String name);
 
-    @Query("""
+    @Query(value = """
         SELECT DISTINCT d FROM Device d
         LEFT JOIN d.userAccesses ua
         WHERE(
@@ -32,12 +34,28 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
             d.owner.id = :userId OR
             ua.user.id = :userId
         )
+        """,
+        countQuery = """
+        SELECT COUNT(DISTINCT d) FROM Device d
+        LEFT JOIN d.userAccesses ua
+        WHERE(
+            (:keyword IS NULL OR :keyword = '') OR
+            (
+                LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                LOWER(d.ipAddress) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                LOWER(d.macAddress) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            )
+        ) AND (
+            :isGlobalAdmin = true OR
+            d.owner.id = :userId OR
+            ua.user.id = :userId
+        )
     """)
-    List<Device> searchDevices(
+    Page<Device> searchDevices(
             @Param("userId") UUID userId,
             @Param("isGlobalAdmin") boolean isGlobalAdmin,
-            @Param("keyword") String keyword
-    );
+            @Param("keyword") String keyword,
+            Pageable pageable);
 
 
     @Query("""
