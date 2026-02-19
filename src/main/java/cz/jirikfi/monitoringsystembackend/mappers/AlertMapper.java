@@ -1,16 +1,16 @@
 package cz.jirikfi.monitoringsystembackend.mappers;
 
 import cz.jirikfi.monitoringsystembackend.entities.Alert;
-import cz.jirikfi.monitoringsystembackend.models.alerts.AlertDetailModel;
-import cz.jirikfi.monitoringsystembackend.models.alerts.AlertResponseModel;
+import cz.jirikfi.monitoringsystembackend.models.alerts.AlertDetailDto;
+import cz.jirikfi.monitoringsystembackend.models.alerts.AlertResponseDto;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AlertMapper {
-    public AlertDetailModel toDetailModel(Alert entity) {
+    public AlertDetailDto toDetailModel(Alert entity) {
         if (entity == null) return null;
 
-        return AlertDetailModel.builder()
+        return AlertDetailDto.builder()
                 .id(entity.getId())
                 .deviceId(entity.getDevice().getId())
                 .deviceName(entity.getDevice().getName())
@@ -25,10 +25,10 @@ public class AlertMapper {
                 .build();
     }
 
-    public AlertResponseModel toResponseModel(Alert entity) {
+    public AlertResponseDto toResponseModel(Alert entity) {
         if (entity == null) return null;
 
-        return AlertResponseModel.builder()
+        return AlertResponseDto.builder()
                 .id(entity.getId())
                 .deviceName(entity.getDevice().getName())
                 .metricType(entity.getMetricType())

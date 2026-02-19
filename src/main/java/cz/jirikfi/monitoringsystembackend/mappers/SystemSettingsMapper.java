@@ -1,14 +1,14 @@
 package cz.jirikfi.monitoringsystembackend.mappers;
 
 import cz.jirikfi.monitoringsystembackend.entities.SystemSettings;
-import cz.jirikfi.monitoringsystembackend.models.settings.SettingsResponseModel;
+import cz.jirikfi.monitoringsystembackend.models.settings.SettingsResponseDto;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SystemSettingsMapper {
 
-    public SettingsResponseModel toResponse(SystemSettings settings) {
-        return SettingsResponseModel.builder()
+    public SettingsResponseDto toResponse(SystemSettings settings) {
+        return SettingsResponseDto.builder()
                 .rawDataRetentionDays(settings.getRawDataRetentionDays())
                 .hourlyDataRetentionDays(settings.getHourlyDataRetentionDays())
                 .dailyDataRetentionDays(settings.getDailyDataRetentionDays())

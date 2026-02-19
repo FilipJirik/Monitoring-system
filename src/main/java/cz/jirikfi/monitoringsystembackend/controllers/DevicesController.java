@@ -1,10 +1,11 @@
 package cz.jirikfi.monitoringsystembackend.controllers;
 
 import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
-import cz.jirikfi.monitoringsystembackend.models.devices.CreateDeviceModel;
-import cz.jirikfi.monitoringsystembackend.models.devices.DeviceResponse;
-import cz.jirikfi.monitoringsystembackend.models.devices.DeviceWithApiKeyModel;
-import cz.jirikfi.monitoringsystembackend.models.devices.UpdateDeviceModel;
+import cz.jirikfi.monitoringsystembackend.models.devices.CreateDeviceRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.devices.DeviceResponseDto;
+import cz.jirikfi.monitoringsystembackend.models.devices.DeviceWithApiKeyDto;
+import cz.jirikfi.monitoringsystembackend.models.devices.UpdateDeviceRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.UserAccessResponseDto;
 import cz.jirikfi.monitoringsystembackend.services.DeviceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,22 +32,22 @@ public class DevicesController {
 
     // POST /api/devices createDevice
     @PostMapping
-    public ResponseEntity<DeviceWithApiKeyModel> createDevice(
-            @RequestBody @Valid CreateDeviceModel model,
+    public ResponseEntity<DeviceWithApiKeyDto> createDevice(
+            @RequestBody @Valid CreateDeviceRequestDto model,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        DeviceWithApiKeyModel device = deviceService.createDevice(principal, model);
+        DeviceWithApiKeyDto device = deviceService.createDevice(principal, model);
         return ResponseEntity.status(HttpStatus.CREATED).body(device);
     }
 
     // PUT /api/devices/{id} updateDevice
     @PutMapping("/{id}")
-    public ResponseEntity<DeviceResponse> updateDevice(
+    public ResponseEntity<DeviceResponseDto> updateDevice(
             @PathVariable UUID id,
-            @RequestBody @Valid UpdateDeviceModel model,
+            @RequestBody @Valid UpdateDeviceRequestDto model,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        DeviceResponse device = deviceService.updateDevice(principal, id, model);
+        DeviceResponseDto device = deviceService.updateDevice(principal, id, model);
         return ResponseEntity.ok().body(device);
     }
 
@@ -61,23 +63,32 @@ public class DevicesController {
 
     // GET /api/devices/{id} GET device by id
     @GetMapping("/{id}")
-    public ResponseEntity<DeviceResponse> getDevice(
+    public ResponseEntity<DeviceResponseDto> getDevice(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        DeviceResponse device = deviceService.getDevice(principal, id);
+        DeviceResponseDto device = deviceService.getDevice(principal, id);
         return ResponseEntity.ok().body(device);
     }
 
     // GET /api/devices GET all devices
     @GetMapping
-    public ResponseEntity<Page<DeviceResponse>> getAllDevices(
+    public ResponseEntity<Page<DeviceResponseDto>> getAllDevices(
             @RequestParam(required = false) String keyword,
             @AuthenticationPrincipal UserPrincipal principal,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        Page<DeviceResponse> devices = deviceService.getAllAccessibleDevices(principal, keyword, pageable);
+        Page<DeviceResponseDto> devices = deviceService.getAllAccessibleDevices(principal, keyword, pageable);
         return ResponseEntity.ok(devices);
+    }
+
+    @GetMapping("/{id}/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<UserAccessResponseDto>> getDeviceUsers(
+            @PathVariable UUID id,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        return ResponseEntity.ok(deviceService.getDeviceUsers(id, pageable));
     }
 
     // PICTURES
@@ -106,11 +117,11 @@ public class DevicesController {
 
     // POST /api/devices/{id}/regenerate-api-key Regenerate current api key of device
     @PostMapping("/{id}/regenerate-api-key")
-    public ResponseEntity<DeviceWithApiKeyModel> regenerateApiKey(
+    public ResponseEntity<DeviceWithApiKeyDto> regenerateApiKey(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        DeviceWithApiKeyModel model = deviceService.regenerateApiKey(principal, id);
+        DeviceWithApiKeyDto model = deviceService.regenerateApiKey(principal, id);
         return ResponseEntity.ok(model);
     }
 }

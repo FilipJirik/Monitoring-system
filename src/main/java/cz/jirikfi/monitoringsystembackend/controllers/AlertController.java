@@ -2,7 +2,7 @@ package cz.jirikfi.monitoringsystembackend.controllers;
 
 import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
 import cz.jirikfi.monitoringsystembackend.enums.AlertSeverity;
-import cz.jirikfi.monitoringsystembackend.models.alerts.AlertResponseModel;
+import cz.jirikfi.monitoringsystembackend.models.alerts.AlertResponseDto;
 import cz.jirikfi.monitoringsystembackend.services.AlertService;
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +23,7 @@ public class AlertController {
     private final AlertService alertService;
 
     @GetMapping
-    public ResponseEntity<Page<AlertResponseModel>> getAlerts(
+    public ResponseEntity<Page<AlertResponseDto>> getAlerts(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(required = false) Boolean isResolved,
             @RequestParam(required = false) AlertSeverity severity,
@@ -33,7 +33,7 @@ public class AlertController {
     }
     // POST /api/alerts/{id}/resolve
     @PostMapping("/{id}/resolve")
-    public ResponseEntity<AlertResponseModel> resolveAlert(
+    public ResponseEntity<AlertResponseDto> resolveAlert(
             @PathVariable UUID id,
             @AuthenticationPrincipal UserPrincipal principal) {
 

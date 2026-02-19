@@ -1,9 +1,11 @@
 package cz.jirikfi.monitoringsystembackend.mappers;
 
 import cz.jirikfi.monitoringsystembackend.entities.Device;
-import cz.jirikfi.monitoringsystembackend.models.devices.CreateDeviceModel;
-import cz.jirikfi.monitoringsystembackend.models.devices.DeviceResponse;
-import cz.jirikfi.monitoringsystembackend.models.devices.UpdateDeviceModel;
+import cz.jirikfi.monitoringsystembackend.models.devices.CreateDeviceRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.devices.DeviceResponseDto;
+import cz.jirikfi.monitoringsystembackend.models.devices.UpdateDeviceRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.DeviceAccessResponseDto;
+import cz.jirikfi.monitoringsystembackend.repositories.projections.DeviceAccess;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -12,8 +14,8 @@ import java.time.Instant;
 @Component
 @RequiredArgsConstructor
 public class DeviceMapper {
-    public DeviceResponse toResponse(Device device) {
-        return DeviceResponse.builder()
+    public DeviceResponseDto toResponse(Device device) {
+        return DeviceResponseDto.builder()
         .id(device.getId())
         .name(device.getName())
         .operatingSystem(device.getOperatingSystem())
@@ -35,7 +37,7 @@ public class DeviceMapper {
 
 
 
-    public Device createToEntity(CreateDeviceModel model) {
+    public Device createToEntity(CreateDeviceRequestDto model) {
         return Device.builder()
                 .name(model.getName())
                 .operatingSystem(model.getOperatingSystem())
@@ -48,7 +50,7 @@ public class DeviceMapper {
                 .sshEnabled(model.getSshEnabled() != null ? model.getSshEnabled() : false)
                 .build();
     }
-    public void updateEntity(Device device, UpdateDeviceModel model) {
+    public void updateEntity(Device device, UpdateDeviceRequestDto model) {
         if (model.getName() != null) device.setName(model.getName());
         if (model.getOperatingSystem() != null) device.setOperatingSystem(model.getOperatingSystem());
         if (model.getIpAddress() != null) device.setIpAddress(model.getIpAddress());
@@ -62,4 +64,18 @@ public class DeviceMapper {
         device.setUpdatedAt(Instant.now());
     }
 
+    public DeviceAccessResponseDto toDeviceAccessResponse(DeviceAccess proj) {
+        if (proj == null) {
+            return null;
+        }
+        String permission = Boolean.TRUE.equals(proj.getIsOwner())
+                ? "OWNER"
+                : (proj.getPermissionLevel() != null ? proj.getPermissionLevel().name() : "READ");
+
+        return DeviceAccessResponseDto.builder()
+                .deviceId(proj.getDeviceId())
+                .deviceName(proj.getDeviceName())
+                .permissionLevel(permission)
+                .build();
+    }
 }

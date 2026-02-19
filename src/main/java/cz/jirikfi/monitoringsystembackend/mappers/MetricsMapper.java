@@ -14,14 +14,14 @@ import java.util.List;
 @Component
 public class MetricsMapper {
 
-    public MetricsStatusModel toStatusModel(Metrics entity, boolean isOnline) {
+    public MetricsStatusDto toStatusModel(Metrics entity, boolean isOnline) {
         if (entity == null) {
-            return MetricsStatusModel.builder()
+            return MetricsStatusDto.builder()
                     .isOnline(false)
                     .build();
         }
 
-        return MetricsStatusModel.builder()
+        return MetricsStatusDto.builder()
                 .isOnline(isOnline)
                 .lastSeen(entity.getTimestamp())
                 .uptimeSeconds(entity.getUptimeSeconds())
@@ -33,7 +33,7 @@ public class MetricsMapper {
                 .build();
     }
 
-    public Metrics toEntity(MetricsCreateModel model, Device device) {
+    public Metrics toEntity(MetricsCreateRequestDto model, Device device) {
         return Metrics.builder()
                 .device(device)
                 .timestamp(Instant.now())
@@ -45,8 +45,8 @@ public class MetricsMapper {
                 .diskUsagePercent(model.getDiskUsagePercent())
                 .build();
     }
-    public MetricsDetailModel toDetailModel(Metrics entity) {
-        return MetricsDetailModel.builder()
+    public MetricsDetailDto toDetailModel(Metrics entity) {
+        return MetricsDetailDto.builder()
                 .timestamp(entity.getTimestamp())
                 .uptimeSeconds(entity.getUptimeSeconds())
                 .cpuUsagePercent(entity.getCpuUsagePercent())
@@ -57,12 +57,12 @@ public class MetricsMapper {
                 .build();
     }
 
-    public MetricsHistoryModel toHistoryModel(List<? extends BaseMetric> data, MetricType type) {
-        List<DataPoint> points = data.stream()
-                .map(m -> new DataPoint(m.getTimestamp(), MetricUtil.getValue(m, type)))
+    public MetricsHistoryDto toHistoryModel(List<? extends BaseMetric> data, MetricType type) {
+        List<DataPointDto> points = data.stream()
+                .map(m -> new DataPointDto(m.getTimestamp(), MetricUtil.getValue(m, type)))
                 .toList();
 
-        return MetricsHistoryModel.builder()
+        return MetricsHistoryDto.builder()
                 .type(type)
                 .label(type.getLabel())
                 .unit(type.getUnit())

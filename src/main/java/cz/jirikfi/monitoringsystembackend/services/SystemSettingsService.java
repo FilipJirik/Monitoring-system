@@ -4,7 +4,7 @@ import cz.jirikfi.monitoringsystembackend.configurations.CacheConfig;
 import cz.jirikfi.monitoringsystembackend.entities.SystemSettings;
 import cz.jirikfi.monitoringsystembackend.exceptions.BadRequestException;
 import cz.jirikfi.monitoringsystembackend.exceptions.InternalErrorException;
-import cz.jirikfi.monitoringsystembackend.models.settings.SettingsUpdateModel;
+import cz.jirikfi.monitoringsystembackend.models.settings.SettingsUpdateRequestDto;
 import cz.jirikfi.monitoringsystembackend.repositories.SystemSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -26,7 +26,7 @@ public class SystemSettingsService {
     }
     @CacheEvict(value = CacheConfig.SYSTEM_SETTINGS, key = "'global'")
     @Transactional
-    public void updateSettings(SettingsUpdateModel model) {
+    public void updateSettings(SettingsUpdateRequestDto model) {
 
         validateRetentionLogic(model);
 
@@ -41,7 +41,7 @@ public class SystemSettingsService {
         settingsRepository.save(settings);
     }
 
-    private void validateRetentionLogic(SettingsUpdateModel request) {
+    private void validateRetentionLogic(SettingsUpdateRequestDto request) {
         // Hourly retention must be >= Raw retention
         if (request.getHourlyDataRetentionDays() < request.getRawDataRetentionDays()) {
             throw new BadRequestException("Hourly retention cannot be less than Raw retention.");

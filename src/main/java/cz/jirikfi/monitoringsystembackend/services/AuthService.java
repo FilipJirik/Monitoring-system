@@ -7,12 +7,12 @@ import cz.jirikfi.monitoringsystembackend.exceptions.ConflictException;
 import cz.jirikfi.monitoringsystembackend.exceptions.NotFoundException;
 import cz.jirikfi.monitoringsystembackend.exceptions.UnauthorizedException;
 import cz.jirikfi.monitoringsystembackend.mappers.AuthMapper;
-import cz.jirikfi.monitoringsystembackend.models.auth.AuthResponse;
-import cz.jirikfi.monitoringsystembackend.models.auth.ChangePasswordRequest;
-import cz.jirikfi.monitoringsystembackend.models.auth.LoginModel;
-import cz.jirikfi.monitoringsystembackend.models.auth.RefreshTokenRequest;
-import cz.jirikfi.monitoringsystembackend.models.auth.RegisterModel;
-import cz.jirikfi.monitoringsystembackend.models.auth.UserInfo;
+import cz.jirikfi.monitoringsystembackend.models.auth.AuthResponseDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.ChangePasswordRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.LoginRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.RefreshTokenRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.RegisterRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.UserInfoDto;
 import cz.jirikfi.monitoringsystembackend.repositories.UserRepository;
 import cz.jirikfi.monitoringsystembackend.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ public class AuthService {
     private final AuthMapper authMapper;
 
     @Transactional
-    public AuthResponse register(RegisterModel request) {
+    public AuthResponseDto register(RegisterRequestDto request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new ConflictException("Username already exists");
         }
@@ -64,7 +64,7 @@ public class AuthService {
         return authMapper.toAuthResponse(user, token, refreshToken);
     }
     @Transactional
-    public AuthResponse login(LoginModel request) {
+    public AuthResponseDto login(LoginRequestDto request) {
         try {
             // Spring Security checks if user password matches - safest
             Authentication authentication = authenticationManager.authenticate(
@@ -99,7 +99,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void changePassword(UserPrincipal principal, ChangePasswordRequest request) {
+    public void changePassword(UserPrincipal principal, ChangePasswordRequestDto request) {
         User user = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
@@ -114,13 +114,13 @@ public class AuthService {
     }
 
     @Transactional(readOnly = true)
-    public UserInfo getCurrentUserInfo(UserPrincipal principal) {
-        return new UserInfo(principal.getId(), principal.getUsername(), principal.getEmail(), principal.getRole());
+    public UserInfoDto getCurrentUserInfo(UserPrincipal principal) {
+        return new UserInfoDto(principal.getId(), principal.getUsername(), principal.getEmail(), principal.getRole());
     }
 
 
     @Transactional
-    public AuthResponse refreshToken(RefreshTokenRequest request) {
+    public AuthResponseDto refreshToken(RefreshTokenRequestDto request) {
         String incomingToken = request.getRefreshToken();
 
         if (!jwtUtil.isTokenValid(incomingToken) || !jwtUtil.isRefreshToken(incomingToken)) {

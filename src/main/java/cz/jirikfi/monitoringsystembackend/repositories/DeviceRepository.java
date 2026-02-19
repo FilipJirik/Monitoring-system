@@ -2,6 +2,7 @@ package cz.jirikfi.monitoringsystembackend.repositories;
 
 import cz.jirikfi.monitoringsystembackend.entities.Device;
 import cz.jirikfi.monitoringsystembackend.entities.User;
+import cz.jirikfi.monitoringsystembackend.repositories.projections.DeviceAccess;
 import cz.jirikfi.monitoringsystembackend.repositories.projections.DeviceAuth;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -96,4 +97,21 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
     @Query("SELECT d.id as id, d.name as name, d.apiKey as apiKey, d.lastSeen as lastSeen " +
             "FROM Device d WHERE d.apiKey = :hash")
     Optional<DeviceAuth> findAuthDataByApiKey(@Param("hash") String hash);
+
+    @Query(value = """
+        SELECT
+            d.id AS deviceId,
+            d.name AS deviceName,
+            (CASE WHEN d.owner.id = :userId THEN true ELSE false END) AS isOwner,
+            ua.permissionLevel AS permissionLevel
+        FROM Device d
+        LEFT JOIN d.userAccesses ua ON ua.user.id = :userId
+        WHERE d.owner.id = :userId OR ua.user.id = :userId
+    """,
+    countQuery = """
+        SELECT COUNT(d) FROM Device d
+        LEFT JOIN d.userAccesses ua ON ua.user.id = :userId
+        WHERE d.owner.id = :userId OR ua.user.id = :userId
+    """)
+    Page<DeviceAccess> findAccessibleDevicesForUser(@Param("userId") UUID userId, Pageable pageable);
 }

@@ -1,12 +1,12 @@
 package cz.jirikfi.monitoringsystembackend.controllers;
 
 import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
-import cz.jirikfi.monitoringsystembackend.models.auth.AuthResponse;
-import cz.jirikfi.monitoringsystembackend.models.auth.ChangePasswordRequest;
-import cz.jirikfi.monitoringsystembackend.models.auth.LoginModel;
-import cz.jirikfi.monitoringsystembackend.models.auth.RefreshTokenRequest;
-import cz.jirikfi.monitoringsystembackend.models.auth.RegisterModel;
-import cz.jirikfi.monitoringsystembackend.models.auth.UserInfo;
+import cz.jirikfi.monitoringsystembackend.models.auth.AuthResponseDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.ChangePasswordRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.LoginRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.RefreshTokenRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.RegisterRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.UserInfoDto;
 import cz.jirikfi.monitoringsystembackend.services.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,14 +26,14 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterModel request) {
-        AuthResponse response = authService.register(request);
+    public ResponseEntity<AuthResponseDto> register(@Valid @RequestBody RegisterRequestDto request) {
+        AuthResponseDto response = authService.register(request);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginModel request) {
-        AuthResponse response = authService.login(request);
+    public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody LoginRequestDto request) {
+        AuthResponseDto response = authService.login(request);
         return ResponseEntity.ok(response);
     }
 
@@ -44,21 +44,21 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
-        AuthResponse response = authService.refreshToken(request);
+    public ResponseEntity<AuthResponseDto> refreshToken(@Valid @RequestBody RefreshTokenRequestDto request) {
+        AuthResponseDto response = authService.refreshToken(request);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserInfo> getCurrentUser(@AuthenticationPrincipal UserPrincipal principal) {
-        UserInfo userInfo = authService.getCurrentUserInfo(principal);
+    public ResponseEntity<UserInfoDto> getCurrentUser(@AuthenticationPrincipal UserPrincipal principal) {
+        UserInfoDto userInfo = authService.getCurrentUserInfo(principal);
         return ResponseEntity.ok(userInfo);
     }
 
     @PostMapping("/change-password")
     public ResponseEntity<Void> changePassword(
             @AuthenticationPrincipal UserPrincipal principal,
-            @Valid @RequestBody ChangePasswordRequest request) {
+            @Valid @RequestBody ChangePasswordRequestDto request) {
         authService.changePassword(principal, request);
         return ResponseEntity.noContent().build();
     }

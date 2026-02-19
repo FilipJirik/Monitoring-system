@@ -4,11 +4,14 @@ import cz.jirikfi.monitoringsystembackend.entities.Device;
 import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
 import cz.jirikfi.monitoringsystembackend.enums.Role;
 import cz.jirikfi.monitoringsystembackend.exceptions.ConflictException;
+import cz.jirikfi.monitoringsystembackend.exceptions.NotFoundException;
 import cz.jirikfi.monitoringsystembackend.mappers.DeviceMapper;
-import cz.jirikfi.monitoringsystembackend.models.devices.CreateDeviceModel;
-import cz.jirikfi.monitoringsystembackend.models.devices.DeviceWithApiKeyModel;
-import cz.jirikfi.monitoringsystembackend.models.devices.DeviceResponse;
-import cz.jirikfi.monitoringsystembackend.models.devices.UpdateDeviceModel;
+import cz.jirikfi.monitoringsystembackend.mappers.UserMapper;
+import cz.jirikfi.monitoringsystembackend.models.devices.CreateDeviceRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.devices.DeviceWithApiKeyDto;
+import cz.jirikfi.monitoringsystembackend.models.devices.DeviceResponseDto;
+import cz.jirikfi.monitoringsystembackend.models.devices.UpdateDeviceRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.UserAccessResponseDto;
 import cz.jirikfi.monitoringsystembackend.repositories.DeviceRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.UserRepository;
 import cz.jirikfi.monitoringsystembackend.utils.ServerUrlUtil;
@@ -33,13 +36,13 @@ public class DeviceService {
     private final ServerUrlUtil serverUrlUtil;
     private final DeviceAuthService deviceAuthService;
     private final AuthorizationService authorizationService;
-
+    private final UserMapper userMapper;
 
     @Value("${app.pictures.default-filename:default.png}")
     private String defaultPictureFilename;
 
     @Transactional
-    public DeviceWithApiKeyModel createDevice(UserPrincipal principal, CreateDeviceModel model) {
+    public DeviceWithApiKeyDto createDevice(UserPrincipal principal, CreateDeviceRequestDto model) {
         if (deviceRepository.existsByName(model.getName()))
             throw new ConflictException("Device with name " + model.getName() + " already exists");
 
@@ -54,7 +57,7 @@ public class DeviceService {
 
         deviceRepository.save(device);
 
-        DeviceWithApiKeyModel response = DeviceWithApiKeyModel.builder()
+        DeviceWithApiKeyDto response = DeviceWithApiKeyDto.builder()
                 .id(device.getId())
                 .apiKey(rawApiKey)
                 .setupCommand(serverUrlUtil.getSetupCommand(device.getId().toString(), rawApiKey))
@@ -65,13 +68,13 @@ public class DeviceService {
     }
 
     @Transactional(readOnly = true)
-    public DeviceResponse getDevice(UserPrincipal principal, UUID id) {
+    public DeviceResponseDto getDevice(UserPrincipal principal, UUID id) {
         Device device = authorizationService.getDeviceWithReadAccess(id, principal);
         return deviceMapper.toResponse(device);
     }
 
     @Transactional
-    public DeviceResponse updateDevice(UserPrincipal principal, UUID id, UpdateDeviceModel model) {
+    public DeviceResponseDto updateDevice(UserPrincipal principal, UUID id, UpdateDeviceRequestDto model) {
         Device device = authorizationService.getDeviceWithEditAccess(id, principal);
 
         deviceMapper.updateEntity(device, model);
@@ -123,7 +126,7 @@ public class DeviceService {
     }
 
     @Transactional
-    public DeviceWithApiKeyModel regenerateApiKey(UserPrincipal principal, UUID id) {
+    public DeviceWithApiKeyDto regenerateApiKey(UserPrincipal principal, UUID id) {
         Device device = authorizationService.getDeviceWithEditAccess(id, principal);
 
         String rawApiKey = deviceAuthService.generateRawApiKey();
@@ -134,7 +137,7 @@ public class DeviceService {
 
         deviceRepository.save(device);
 
-        DeviceWithApiKeyModel response = DeviceWithApiKeyModel.builder()
+        DeviceWithApiKeyDto response = DeviceWithApiKeyDto.builder()
                 .id(id)
                 .apiKey(rawApiKey)
                 .setupCommand(serverUrlUtil.getSetupCommand(id.toString(), rawApiKey))
@@ -146,7 +149,7 @@ public class DeviceService {
     }
 
     @Transactional(readOnly = true)
-    public Page<DeviceResponse> getAllAccessibleDevices(UserPrincipal principal, String keyword, Pageable pageable) {
+    public Page<DeviceResponseDto> getAllAccessibleDevices(UserPrincipal principal, String keyword, Pageable pageable) {
         String searchKey = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
         boolean isAdmin = principal.getRole() == Role.ADMIN;
 
@@ -158,5 +161,15 @@ public class DeviceService {
         if (imageFilename != null && !imageFilename.equals(defaultPictureFilename)) {
             imageService.deleteImage(imageFilename);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserAccessResponseDto> getDeviceUsers(UUID deviceId, Pageable pageable) {
+        if (!deviceRepository.existsById(deviceId)) {
+            throw new NotFoundException("Device with id: " + deviceId + "not found");
+        }
+
+        return userRepository.findUsersWithAccessToDevice(deviceId, pageable)
+                .map(userMapper::toUserAccessResponse);
     }
 }

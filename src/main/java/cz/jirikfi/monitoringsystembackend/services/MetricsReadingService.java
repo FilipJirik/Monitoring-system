@@ -7,8 +7,8 @@ import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
 import cz.jirikfi.monitoringsystembackend.enums.MetricPeriod;
 import cz.jirikfi.monitoringsystembackend.enums.MetricType;
 import cz.jirikfi.monitoringsystembackend.mappers.MetricsMapper;
-import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsStatusModel;
-import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsHistoryModel;
+import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsStatusDto;
+import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsHistoryDto;
 import cz.jirikfi.monitoringsystembackend.repositories.MetricsDailyRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.MetricsHourlyRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.MetricsRepository;
@@ -33,7 +33,7 @@ public class MetricsReadingService {
     private final MetricsMapper metricsMapper;
 
     @Transactional(readOnly = true)
-    public MetricsStatusModel getLatestMetrics(UserPrincipal principal, UUID deviceId) {
+    public MetricsStatusDto getLatestMetrics(UserPrincipal principal, UUID deviceId) {
         // Lightweight check - we don't need the Device entity, just working with metrics
         authorizationService.verifyReadAccess(deviceId, principal);
 
@@ -52,7 +52,7 @@ public class MetricsReadingService {
     }
 
     @Transactional(readOnly = true)
-    public MetricsHistoryModel getMetricsHistory(UserPrincipal principal, UUID deviceId, MetricType type, MetricPeriod period) {
+    public MetricsHistoryDto getMetricsHistory(UserPrincipal principal, UUID deviceId, MetricType type, MetricPeriod period) {
         authorizationService.verifyReadAccess(deviceId, principal);
 
         SystemSettings settings = settingsService.getSettings();

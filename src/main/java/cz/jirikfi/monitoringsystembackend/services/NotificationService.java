@@ -2,7 +2,7 @@ package cz.jirikfi.monitoringsystembackend.services;
 
 import cz.jirikfi.monitoringsystembackend.entities.Alert;
 import cz.jirikfi.monitoringsystembackend.mappers.AlertMapper;
-import cz.jirikfi.monitoringsystembackend.models.alerts.AlertDetailModel;
+import cz.jirikfi.monitoringsystembackend.models.alerts.AlertDetailDto;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +11,10 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +25,9 @@ public class NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
     private final AlertMapper alertMapper;
 
-    private static final String WEBSOCKET_ALERT_PATH = "/topic/devices/%s/alerts";
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -34,16 +40,41 @@ public class NotificationService {
 
             helper.setFrom(fromEmail);
             helper.setTo(userEmail);
-            helper.setSubject(String.format("ALERT: %s on device %s",
-                    alert.getSeverity(), alert.getDevice().getName()));
+
+            String subject;
+            String header;
+            String headerColor;
+            String statusText;
+            String statusColor;
+
+            if (alert.getIsResolved()) {
+                subject = String.format("RESOLVED: %s on device %s - %s",
+                        alert.getMetricType().getLabel(), alert.getDevice().getName(), alert.getSeverity());
+                header = "System Alert Resolved";
+                headerColor = "#4CAF50"; // Green for resolved
+                statusText = "RESOLVED";
+                statusColor = "#4CAF50";
+            } else {
+                subject = String.format("ALERT: %s on device %s - %s",
+                        alert.getMetricType().getLabel(), alert.getDevice().getName(), alert.getSeverity());
+                header = "System Alert Triggered";
+                headerColor = "#d9534f"; // Red for triggered
+                statusText = "ACTIVE";
+                statusColor = "#d9534f";
+            }
+            helper.setSubject(subject);
 
             String htmlContent = String.format("""
                             <html>
                             <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-                                <h2 style="color: #d9534f;">System Alert Triggered</h2>
-                                <p>An anomaly has been detected on device <strong>%s</strong>.</p>
+                                <h2 style="color: %s;">%s</h2>
+                                <p>An alert has been %s on device <strong>%s</strong>.</p>
                             
                                 <table style="border-collapse: collapse; width: 100%%; max-width: 600px; margin-top: 15px;">
+                                    <tr>
+                                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Status:</strong></td>
+                                        <td style="padding: 8px; border-bottom: 1px solid #ddd; color: %s;"><strong>%s</strong></td>
+                                    </tr>
                                     <tr>
                                         <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Metric:</strong></td>
                                         <td style="padding: 8px; border-bottom: 1px solid #ddd;">%s</td>
@@ -54,16 +85,14 @@ public class NotificationService {
                                     </tr>
                                     <tr>
                                         <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Current Value:</strong></td>
-                                        <td style="padding: 8px; border-bottom: 1px solid #ddd; color: #d9534f;"><strong>%s</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Threshold:</strong></td>
                                         <td style="padding: 8px; border-bottom: 1px solid #ddd;">%s</td>
                                     </tr>
+                                    %s <!-- Threshold Row -->
                                     <tr>
                                         <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Time:</strong></td>
                                         <td style="padding: 8px; border-bottom: 1px solid #ddd;">%s</td>
                                     </tr>
+                                    %s <!-- Resolved Time Row -->
                                 </table>
                             
                                 <p style="margin-top: 20px;"><strong>Details:</strong><br>%s</p>
@@ -74,12 +103,20 @@ public class NotificationService {
                             </body>
                             </html>
                             """,
+                    headerColor,
+                    header,
+                    alert.getIsResolved() ? "resolved" : "triggered",
                     alert.getDevice().getName(),
-                    alert.getMetricType(),
+                    statusColor,
+                    statusText,
+                    alert.getMetricType().getLabel(),
                     alert.getSeverity(),
                     alert.getMetricValue(),
-                    alert.getThresholdValue(),
-                    alert.getCreatedAt().toString(),
+                    alert.getThresholdValue() != null ?
+                            String.format("<tr><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\"><strong>Threshold:</strong></td><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\">%s</td></tr>", alert.getThresholdValue()) : "",
+                    DATE_TIME_FORMATTER.format(alert.getCreatedAt()),
+                    alert.getResolvedAt() != null ?
+                            String.format("<tr><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\"><strong>Resolved At:</strong></td><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\">%s</td></tr>", DATE_TIME_FORMATTER.format(alert.getResolvedAt())) : "",
                     alert.getMessage()
             );
 
@@ -89,21 +126,26 @@ public class NotificationService {
             log.info("HTML Email alert successfully sent to {}", userEmail);
 
         } catch (Exception e) {
-            log.error("Failed to send HTML email alert to {}: {}", userEmail, e.getMessage());
+            log.error("Failed to send HTML email alert to {}", userEmail, e);
         }
     }
 
     public void sendFrontendAlert(Alert alert) {
         try {
-            String destination = String.format(WEBSOCKET_ALERT_PATH, alert.getDevice().getId());
+            String destination;
+            if (alert.getIsResolved()) {
+                destination = "/topic/alerts/resolved";
+            } else {
+                destination = "/topic/alerts";
+            }
 
-            AlertDetailModel payload = alertMapper.toDetailModel(alert);
+            AlertDetailDto payload = alertMapper.toDetailModel(alert);
 
             messagingTemplate.convertAndSend(destination, payload);
             log.info("WebSocket alert broadcasted to {}", destination);
 
         } catch (Exception e) {
-            log.error("Failed to send WebSocket alert for device {}: {}", alert.getDevice().getId(), e.getMessage());
+            log.error("Failed to send WebSocket alert for device {}", alert.getDevice().getId(), e);
         }
     }
 }

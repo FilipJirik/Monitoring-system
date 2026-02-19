@@ -2,8 +2,8 @@ package cz.jirikfi.monitoringsystembackend.controllers;
 
 import cz.jirikfi.monitoringsystembackend.entities.SystemSettings;
 import cz.jirikfi.monitoringsystembackend.mappers.SystemSettingsMapper;
-import cz.jirikfi.monitoringsystembackend.models.settings.SettingsUpdateModel;
-import cz.jirikfi.monitoringsystembackend.models.settings.SettingsResponseModel;
+import cz.jirikfi.monitoringsystembackend.models.settings.SettingsUpdateRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.settings.SettingsResponseDto;
 import cz.jirikfi.monitoringsystembackend.services.SystemSettingsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class SettingsController {
     // GET /api/settings GET current global settings
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SettingsResponseModel> getSettings() {
+    public ResponseEntity<SettingsResponseDto> getSettings() {
         SystemSettings settings = systemSettingsService.getSettings();
         return ResponseEntity.ok(systemSettingsMapper.toResponse(settings));
     }
@@ -30,7 +30,7 @@ public class SettingsController {
     // PUT /api/settings change global settings
     @PutMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> changeSettings(@Valid @RequestBody SettingsUpdateModel model){
+    public ResponseEntity<Void> changeSettings(@Valid @RequestBody SettingsUpdateRequestDto model){
         systemSettingsService.updateSettings(model);
         return ResponseEntity.noContent().build();
     }

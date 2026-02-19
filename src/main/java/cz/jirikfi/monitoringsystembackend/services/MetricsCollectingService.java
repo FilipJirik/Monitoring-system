@@ -4,11 +4,13 @@ import cz.jirikfi.monitoringsystembackend.entities.Device;
 import cz.jirikfi.monitoringsystembackend.entities.Metrics;
 import cz.jirikfi.monitoringsystembackend.exceptions.InternalErrorException;
 import cz.jirikfi.monitoringsystembackend.mappers.MetricsMapper;
-import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsCreateModel;
-import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsDetailModel;
+import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsCreateRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsDetailDto;
+import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsSavedEvent;
 import cz.jirikfi.monitoringsystembackend.repositories.DeviceRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.MetricsRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class MetricsCollectingService {
     private final MetricsRepository metricRepository;
     private final AlertProcessingService alertProcessingService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final org.slf4j.Logger _logger = org.slf4j.LoggerFactory.getLogger(MetricsCollectingService.class);
 
@@ -34,7 +37,7 @@ public class MetricsCollectingService {
 
     @Async
     @Transactional
-    public void processIncomingMetrics(UUID deviceId, UUID principalDeviceId, MetricsCreateModel model) {
+    public void processIncomingMetrics(UUID deviceId, UUID principalDeviceId, MetricsCreateRequestDto model) {
         if (!deviceId.equals(principalDeviceId)) {
             throw new InternalErrorException("Device ID mismatch");
         }
@@ -44,7 +47,7 @@ public class MetricsCollectingService {
         Metrics metrics = metricsMapper.toEntity(model, device);
         metricRepository.save(metrics);
 
-        alertProcessingService.checkThresholdsAsync(metrics);
+        eventPublisher.publishEvent(new MetricsSavedEvent(metrics.getId()));
 
         broadcastMetricToFrontend(metrics);
     }
@@ -55,7 +58,7 @@ public class MetricsCollectingService {
             UUID deviceId = metric.getDevice().getId();
             String destination = String.format(WEBSOCKET_METRICS_PATH, deviceId);
 
-            MetricsDetailModel payload = metricsMapper.toDetailModel(metric);
+            MetricsDetailDto payload = metricsMapper.toDetailModel(metric);
             messagingTemplate.convertAndSend(destination, payload);
 
         } catch (Exception e) {

@@ -9,7 +9,7 @@ import cz.jirikfi.monitoringsystembackend.exceptions.ConflictException;
 import cz.jirikfi.monitoringsystembackend.exceptions.ForbiddenException;
 import cz.jirikfi.monitoringsystembackend.exceptions.NotFoundException;
 import cz.jirikfi.monitoringsystembackend.mappers.AlertMapper;
-import cz.jirikfi.monitoringsystembackend.models.alerts.AlertResponseModel;
+import cz.jirikfi.monitoringsystembackend.models.alerts.AlertResponseDto;
 import cz.jirikfi.monitoringsystembackend.repositories.AlertRecipientRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.AlertRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.UserRepository;
@@ -38,7 +38,7 @@ public class AlertService {
     private final NotificationJobService notificationJobService;
 
     @Transactional(readOnly = true)
-    public Page<AlertResponseModel> getAlerts(UserPrincipal principal, Boolean isResolved, AlertSeverity severity, Pageable pageable) {
+    public Page<AlertResponseDto> getAlerts(UserPrincipal principal, Boolean isResolved, AlertSeverity severity, Pageable pageable) {
         boolean isAdmin = principal.getRole() == Role.ADMIN;
 
         Page<Alert> alertPage = alertRepository.findAllFiltered(
@@ -52,7 +52,7 @@ public class AlertService {
     }
 
     @Transactional
-    public AlertResponseModel resolveAlert(UUID alertId, UserPrincipal principal) {
+    public AlertResponseDto resolveAlert(UUID alertId, UserPrincipal principal) {
         Alert alert = alertRepository.findById(alertId)
                 .orElseThrow(() -> new NotFoundException("Alert not found with ID: " + alertId));
 

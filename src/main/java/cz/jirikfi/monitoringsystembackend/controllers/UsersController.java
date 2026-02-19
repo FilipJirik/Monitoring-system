@@ -1,13 +1,12 @@
 package cz.jirikfi.monitoringsystembackend.controllers;
 
 import cz.jirikfi.monitoringsystembackend.entities.User;
-import cz.jirikfi.monitoringsystembackend.entities.UserDeviceAccess;
-import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.CreatePermissionRequest;
-import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.UpdatePermissionRequest;
-import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.UserDeviceAccessModel;
-import cz.jirikfi.monitoringsystembackend.models.users.CreateUserModel;
-import cz.jirikfi.monitoringsystembackend.models.users.UserResponse;
-import cz.jirikfi.monitoringsystembackend.models.users.UpdateUserModel;
+import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.CreatePermissionRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.DeviceAccessResponseDto;
+import cz.jirikfi.monitoringsystembackend.models.userDeviceAccess.UpdatePermissionRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.users.CreateUserRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.users.UserResponseDto;
+import cz.jirikfi.monitoringsystembackend.models.users.UpdateUserRequestDto;
 import cz.jirikfi.monitoringsystembackend.services.UserService;
 
 import jakarta.validation.Valid;
@@ -33,7 +32,7 @@ public class UsersController {
     // Create
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> addUser(@RequestBody @Valid CreateUserModel model) {
+    public ResponseEntity<User> addUser(@RequestBody @Valid CreateUserRequestDto model) {
         User user = userService.createUser(model);
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
@@ -47,7 +46,7 @@ public class UsersController {
     // Update
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody @Valid UpdateUserModel model) {
+    public ResponseEntity<User> updateUser(@PathVariable UUID id, @RequestBody @Valid UpdateUserRequestDto model) {
         User user = userService.updateUser(id, model);
         return ResponseEntity.ok().body(user);
     }
@@ -64,11 +63,11 @@ public class UsersController {
     // use: for adding users when looking for contact emails for device
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Page<UserResponse>> getUsersByKeyword(
+    public ResponseEntity<Page<UserResponseDto>> getUsersByKeyword(
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        Page<UserResponse> users = userService.getUsersByKeyword(keyword, pageable);
+        Page<UserResponseDto> users = userService.getUsersByKeyword(keyword, pageable);
         return ResponseEntity.ok().body(users);
     }
 
@@ -77,8 +76,8 @@ public class UsersController {
     // POST /api/users/{userId}/devices/{deviceId} grantAccessForDeviceToUser
     @PostMapping("/{userId}/devices/{deviceId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDeviceAccessModel> grantAccessForDeviceToUser(@PathVariable UUID userId, @PathVariable UUID deviceId,
-                                                                            @RequestBody @Valid CreatePermissionRequest model) {
+    public ResponseEntity<Void> grantAccessForDeviceToUser(@PathVariable UUID userId, @PathVariable UUID deviceId,
+                                                                            @RequestBody @Valid CreatePermissionRequestDto model) {
         userService.grantAccess(userId, deviceId, model);
         return ResponseEntity.noContent().build();
     }
@@ -86,8 +85,8 @@ public class UsersController {
     // UPDATE /api/users/{userId}/devices/{deviceId} updatePermissions
     @PutMapping("/{userId}/devices/{deviceId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDeviceAccess> updatePermissions(@PathVariable UUID userId, @PathVariable UUID deviceId,
-                                                              @RequestBody @Valid UpdatePermissionRequest model) {
+    public ResponseEntity<Void> updatePermissions(@PathVariable UUID userId, @PathVariable UUID deviceId,
+                                                              @RequestBody @Valid UpdatePermissionRequestDto model) {
         userService.changePermission(userId, deviceId, model);
         return ResponseEntity.noContent().build();
     }
@@ -98,5 +97,15 @@ public class UsersController {
     public ResponseEntity<Void> revokeAccessForDeviceToUser(@PathVariable UUID userId, @PathVariable UUID deviceId) {
         userService.revokeAccess(userId, deviceId);
         return ResponseEntity.noContent().build();
+    }
+
+    // GET /api/users/{userId}/devices
+    @GetMapping("/{userId}/devices")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<DeviceAccessResponseDto>> getUserDeviceAccesses(
+            @PathVariable UUID userId,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        return ResponseEntity.ok(userService.getUserDeviceAccesses(userId, pageable));
     }
 }

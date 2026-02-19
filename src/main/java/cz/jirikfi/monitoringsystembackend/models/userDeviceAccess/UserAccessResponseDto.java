@@ -1,5 +1,4 @@
 package cz.jirikfi.monitoringsystembackend.models.userDeviceAccess;
-
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,8 +8,9 @@ import java.util.UUID;
 @Getter
 @Setter
 @Builder
-public class UserDeviceAccessModel {
+public class UserAccessResponseDto {
     private UUID userId;
-    private UUID deviceId;
-    private String permissionLevel;
+    private String username;
+    private String email;
+    private String permissionLevel; // "OWNER", "READ", "EDIT"
 }
