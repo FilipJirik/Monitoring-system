@@ -13,6 +13,7 @@ import cz.jirikfi.monitoringsystembackend.models.alerts.AlertResponseDto;
 import cz.jirikfi.monitoringsystembackend.repositories.AlertRecipientRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.AlertRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.UserRepository;
+import cz.jirikfi.monitoringsystembackend.repositories.projections.AlertSummary;
 import cz.jirikfi.monitoringsystembackend.services.background.NotificationJobService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +42,7 @@ public class AlertService {
     public Page<AlertResponseDto> getAlerts(UserPrincipal principal, Boolean isResolved, AlertSeverity severity, Pageable pageable) {
         boolean isAdmin = principal.getRole() == Role.ADMIN;
 
-        Page<Alert> alertPage = alertRepository.findAllFiltered(
+        Page<AlertSummary> alertPage = alertRepository.findAllFiltered(
                 principal.getId(),
                 isAdmin,
                 isResolved,
@@ -80,5 +81,16 @@ public class AlertService {
         jobScheduler.enqueue(() -> notificationJobService.processAlertNotifications(alertId));
 
         return alertMapper.toResponseModel(savedAlert);
+    }
+
+    @Transactional
+    public void deleteAlert(UUID alertId, UserPrincipal principal) {
+        Alert alert = alertRepository.findById(alertId)
+                .orElseThrow(() -> new NotFoundException("Alert not found with ID: " + alertId));
+
+        if (principal.getRole() != Role.ADMIN)
+            throw new ForbiddenException("You don't have permission to delete this alert");
+
+        alertRepository.delete(alert);
     }
 }

@@ -13,9 +13,7 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
 
 # Picture maximum file sizes
   servlet:
@@ -40,8 +38,10 @@ spring:
 # JWT
 jwt:
   secret: ${JWT_SECRET}
-  expiration: 3600000 # milliseconds (1000 * 60 * 60) 1 hour
-  refresh-expiration: 604800000 # milliseconds (1000 * 60 * 60 * 24 * 7) 7 days
+  #expiration: 3600000 # milliseconds (1000 * 60 * 60) 1 hour
+  expiration: 60000  # 1 minute
+  #refresh-expiration: 604800000 # milliseconds (1000 * 60 * 60 * 24 * 7) 7 days
+  refresh-expiration: 300000 # 5 minutes
 
 # Error messages
 server:

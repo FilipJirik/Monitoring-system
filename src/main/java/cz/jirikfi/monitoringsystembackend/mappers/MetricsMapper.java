@@ -30,6 +30,11 @@ public class MetricsMapper {
                 .currentCpuFreqMhz(entity.getCpuFreqAvgMhz())
                 .currentRamUsage(entity.getRamUsageMb() != null ? entity.getRamUsageMb().doubleValue() : 0.0)
                 .currentDiskUsage(entity.getDiskUsagePercent())
+                .currentNetworkInKbps(entity.getNetworkInKbps())
+                .currentNetworkOutKbps(entity.getNetworkOutKbps())
+                .processCount(entity.getProcessCount())
+                .tcpConnectionsCount(entity.getTcpConnectionsCount())
+                .listeningPortsCount(entity.getListeningPortsCount())
                 .build();
     }
 
@@ -43,6 +48,11 @@ public class MetricsMapper {
                 .cpuTempCelsius(model.getCpuTempCelsius())
                 .ramUsageMb(model.getRamUsageMb())
                 .diskUsagePercent(model.getDiskUsagePercent())
+                .networkInKbps(model.getNetworkInKbps())
+                .networkOutKbps(model.getNetworkOutKbps())
+                .processCount(model.getProcessCount())
+                .tcpConnectionsCount(model.getTcpConnectionsCount())
+                .listeningPortsCount(model.getListeningPortsCount())
                 .build();
     }
     public MetricsDetailDto toDetailModel(Metrics entity) {
@@ -53,7 +63,12 @@ public class MetricsMapper {
                 .cpuTempCelsius(entity.getCpuTempCelsius())
                 .ramUsageMb(entity.getRamUsageMb())
                 .diskUsagePercent(entity.getDiskUsagePercent())
+                .networkInKbps(entity.getNetworkInKbps())
+                .networkOutKbps(entity.getNetworkOutKbps())
                 .cpuFreqAvgMhz(entity.getCpuFreqAvgMhz())
+                .processCount(entity.getProcessCount())
+                .tcpConnectionsCount(entity.getTcpConnectionsCount())
+                .listeningPortsCount(entity.getListeningPortsCount())
                 .build();
     }
 

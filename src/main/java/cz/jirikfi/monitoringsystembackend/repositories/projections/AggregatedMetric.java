@@ -9,4 +9,7 @@ public interface AggregatedMetric {
     Double getAvgNetworkIn();
     Double getAvgNetworkOut();
     Long getMaxUptime();
+    Double getAvgProcessCount();
+    Double getAvgTcpConnectionsCount();
+    Double getAvgListeningPortsCount();
 }

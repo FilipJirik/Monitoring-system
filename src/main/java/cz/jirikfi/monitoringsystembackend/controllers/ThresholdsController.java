@@ -45,7 +45,7 @@ public class ThresholdsController {
     // PUT /api/devices/{deviceId}/thresholds/{id}
     @PutMapping("/{id}")
     public ResponseEntity<ThresholdResponseDto> updateThreshold(
-            @PathVariable UUID deviceId, // Důležité pro kontext
+            @PathVariable UUID deviceId,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateThresholdRequestDto request,
             @AuthenticationPrincipal UserPrincipal principal) {

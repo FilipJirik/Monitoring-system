@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -34,14 +33,11 @@ public class RefreshTokenService {
         Instant expiryDate = Instant.now().plusSeconds(expirationSeconds);
         String newTokenString = jwtUtil.generateRefreshToken(user.getId());
 
-        RefreshToken refreshToken = refreshTokenRepository.findByUserId(user.getId())
-                .orElse(RefreshToken.builder()
-                        .user(user)
-                        .build());
-
-        refreshToken.setToken(newTokenString);
-        refreshToken.setExpiryDate(expiryDate);
-        refreshToken.setUser(user);
+        RefreshToken refreshToken = RefreshToken.builder()
+                .user(user)
+                .token(newTokenString)
+                .expiryDate(expiryDate)
+                .build();
 
         refreshTokenRepository.save(refreshToken);
         return newTokenString;
@@ -57,7 +53,7 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public void deleteByUserId(UUID userId) {
-        refreshTokenRepository.deleteByUserId(userId);
+    public void deleteByToken(String token) {
+        refreshTokenRepository.deleteByToken(token);
     }
 }

@@ -7,16 +7,12 @@ import cz.jirikfi.monitoringsystembackend.mappers.AlertThresholdMapper;
 import cz.jirikfi.monitoringsystembackend.models.thresholds.CreateThresholdRequestDto;
 import cz.jirikfi.monitoringsystembackend.models.thresholds.ThresholdResponseDto;
 import cz.jirikfi.monitoringsystembackend.models.thresholds.UpdateThresholdRequestDto;
-import cz.jirikfi.monitoringsystembackend.repositories.AlertRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.AlertThresholdRepository;
-import cz.jirikfi.monitoringsystembackend.utils.MetricUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service

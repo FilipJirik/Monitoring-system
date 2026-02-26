@@ -3,8 +3,6 @@ package cz.jirikfi.monitoringsystembackend.repositories;
 import cz.jirikfi.monitoringsystembackend.entities.BaseMetric;
 import cz.jirikfi.monitoringsystembackend.entities.Metrics;
 import cz.jirikfi.monitoringsystembackend.repositories.projections.AggregatedMetric;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -22,18 +20,21 @@ public interface MetricsRepository extends JpaRepository<Metrics, UUID> {
     List<? extends BaseMetric> findAllByDeviceIdAndTimestampBetweenOrderByTimestampAsc(UUID deviceId, Instant from, Instant to);
 
     @Query("""
-        SELECT 
+        SELECT
             AVG(m.cpuUsagePercent) as avgCpuUsage,
             AVG(m.cpuTempCelsius) as avgCpuTemp,
-            AVG(m.cpuFreqAvgMhz) as avgCpuFreq,  
+            AVG(m.cpuFreqAvgMhz) as avgCpuFreq,
             AVG(m.ramUsageMb) as avgRamUsage,
             AVG(m.diskUsagePercent) as avgDiskUsage,
             AVG(m.networkInKbps) as avgNetworkIn,
             AVG(m.networkOutKbps) as avgNetworkOut,
-            MAX(m.uptimeSeconds) as maxUptime
+            MAX(m.uptimeSeconds) as maxUptime,
+            AVG(m.processCount) as avgProcessCount,
+            AVG(m.tcpConnectionsCount) as avgTcpConnectionsCount,
+            AVG(m.listeningPortsCount) as avgListeningPortsCount
         FROM Metrics m
-        WHERE m.device.id = :deviceId 
-          AND m.timestamp >= :from 
+        WHERE m.device.id = :deviceId
+          AND m.timestamp >= :from
           AND m.timestamp < :to
     """)
     AggregatedMetric findAggregatedValues(UUID deviceId, Instant from, Instant to);

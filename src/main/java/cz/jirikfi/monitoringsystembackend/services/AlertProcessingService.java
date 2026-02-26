@@ -4,7 +4,6 @@ import cz.jirikfi.monitoringsystembackend.entities.Alert;
 import cz.jirikfi.monitoringsystembackend.entities.AlertThreshold;
 import cz.jirikfi.monitoringsystembackend.entities.Metrics;
 import cz.jirikfi.monitoringsystembackend.enums.ThresholdOperator;
-import cz.jirikfi.monitoringsystembackend.exceptions.NotFoundException;
 import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsSavedEvent;
 import cz.jirikfi.monitoringsystembackend.repositories.AlertRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.MetricsRepository;
@@ -65,9 +64,6 @@ public class AlertProcessingService {
     private void processThreshold(Metrics metric, AlertThreshold threshold) {
         Double currentValue = MetricUtil.getValue(metric, threshold.getMetricType());
 
-        if (currentValue == null)
-            return;
-
         boolean isBreached = MetricUtil.isThresholdBreached(currentValue, threshold);
 
         // Check for the existing active alert for this specific rule
@@ -102,11 +98,26 @@ public class AlertProcessingService {
                 operatorSymbol = "==";
                 yield "equaled";
             }
+            case IS_NULL -> {
+                operatorSymbol = "";
+                yield "is missing (null)";
+            }
+            case IS_NOT_NULL -> {
+                operatorSymbol = "";
+                yield "is present (not null)";
+            }
             default -> {
                 operatorSymbol = "";
                 yield "breached";
             }
         };
+        
+        if (threshold.getOperator() == ThresholdOperator.IS_NULL || threshold.getOperator() == ThresholdOperator.IS_NOT_NULL) {
+            return String.format("%s value %s",
+                    threshold.getMetricType().getLabel(),
+                    comparisonText);
+        }
+
         return String.format("%s value (%s) %s the threshold %s %s",
                 threshold.getMetricType().getLabel(),
                 currentValue,

@@ -22,6 +22,7 @@ public class AlertController {
 
     private final AlertService alertService;
 
+    // GET /api/alerts
     @GetMapping
     public ResponseEntity<Page<AlertResponseDto>> getAlerts(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -38,5 +39,14 @@ public class AlertController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         return ResponseEntity.ok(alertService.resolveAlert(id, principal));
+    }
+    // DELETE /api/alerts/{id}
+    @DeleteMapping("{id}")
+    public ResponseEntity<Void> deleteAlert(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        alertService.deleteAlert(id, principal);
+        return ResponseEntity.noContent().build();
     }
 }

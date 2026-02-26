@@ -24,8 +24,11 @@ public interface MetricsHourlyRepository extends JpaRepository<MetricsHourly, UU
             AVG(m.diskUsagePercent) as avgDiskUsage,
             AVG(m.networkInKbps) as avgNetworkIn,
             AVG(m.networkOutKbps) as avgNetworkOut,
-            MAX(m.uptimeSeconds) as maxUptime
-        FROM Metrics m
+            MAX(m.uptimeSeconds) as maxUptime,
+            AVG(m.processCount) as avgProcessCount,
+            AVG(m.tcpConnectionsCount) as avgTcpConnectionsCount,
+            AVG(m.listeningPortsCount) as avgListeningPortsCount
+        FROM MetricsHourly m
         WHERE m.device.id = :deviceId
           AND m.timestamp >= :from
           AND m.timestamp < :to

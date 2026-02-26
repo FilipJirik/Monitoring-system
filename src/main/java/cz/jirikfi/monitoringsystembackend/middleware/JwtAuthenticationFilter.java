@@ -44,34 +44,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String jwt = getJwtFromRequest(request);
 
-        if (jwt != null && jwtUtil.isTokenValid(jwt)) {
-            UUID userId = jwtUtil.getUserIdFromToken(jwt);
-            String email = jwtUtil.getEmailFromToken(jwt);
-            String username = jwtUtil.getUsernameFromToken(jwt);
-            String roleName = jwtUtil.getRoleFromToken(jwt);
+        if (jwt != null) {
+            if (jwtUtil.isTokenValid(jwt)) {
+                UUID userId = jwtUtil.getUserIdFromToken(jwt);
+                String email = jwtUtil.getEmailFromToken(jwt);
+                String username = jwtUtil.getUsernameFromToken(jwt);
+                String roleName = jwtUtil.getRoleFromToken(jwt);
 
-            Role role = (roleName != null) ? Role.valueOf(roleName) : Role.USER;
+                Role role = (roleName != null) ? Role.valueOf(roleName) : Role.USER;
 
-            UserPrincipal principalUser = UserPrincipal.builder()
-                    .id(userId)
-                    .email(email)
-                    .username(username)
-                    .role(role)
-                    .password(null)
-                    .build();
+                UserPrincipal principalUser = UserPrincipal.builder()
+                        .id(userId)
+                        .email(email)
+                        .username(username)
+                        .role(role)
+                        .password(null)
+                        .build();
 
-            List<SimpleGrantedAuthority> authorities = Collections.singletonList(
-                    new SimpleGrantedAuthority("ROLE_" + role.name())
-            );
+                List<SimpleGrantedAuthority> authorities = Collections.singletonList(
+                        new SimpleGrantedAuthority("ROLE_" + role.name())
+                );
 
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    principalUser,
-                    null,
-                    authorities
-            );
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                        principalUser,
+                        null,
+                        authorities
+                );
 
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(auth);
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            } else {
+                // Token is present but invalid
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\": \"Unauthorized - Invalid or expired token\"}");
+                return; // Stop the filter chain
+            }
         }
 
         filterChain.doFilter(request, response);

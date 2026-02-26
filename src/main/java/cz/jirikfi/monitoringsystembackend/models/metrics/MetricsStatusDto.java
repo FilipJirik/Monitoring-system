@@ -21,4 +21,9 @@ public class MetricsStatusDto {
     private Double currentRamUsage;
     private Double currentDiskUsage;
     private Double currentCpuTemp;
+    private Double currentNetworkInKbps;
+    private Double currentNetworkOutKbps;
+    private Integer processCount;
+    private Integer tcpConnectionsCount;
+    private Integer listeningPortsCount;
 }

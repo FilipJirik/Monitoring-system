@@ -3,6 +3,7 @@ package cz.jirikfi.monitoringsystembackend.mappers;
 import cz.jirikfi.monitoringsystembackend.entities.Alert;
 import cz.jirikfi.monitoringsystembackend.models.alerts.AlertDetailDto;
 import cz.jirikfi.monitoringsystembackend.models.alerts.AlertResponseDto;
+import cz.jirikfi.monitoringsystembackend.repositories.projections.AlertSummary;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -38,5 +39,16 @@ public class AlertMapper {
                 .build();
     }
 
+    public AlertResponseDto toResponseModel(AlertSummary projection) {
+        if (projection == null) return null;
 
+        return AlertResponseDto.builder()
+                .id(projection.getId())
+                .deviceName(projection.getDevice().getName())
+                .metricType(projection.getMetricType())
+                .severity(projection.getSeverity())
+                .isResolved(projection.getIsResolved())
+                .createdAt(projection.getCreatedAt())
+                .build();
+    }
 }

@@ -4,6 +4,7 @@ import cz.jirikfi.monitoringsystembackend.entities.UserPrincipal;
 import cz.jirikfi.monitoringsystembackend.models.auth.AuthResponseDto;
 import cz.jirikfi.monitoringsystembackend.models.auth.ChangePasswordRequestDto;
 import cz.jirikfi.monitoringsystembackend.models.auth.LoginRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.LogoutRequestDto;
 import cz.jirikfi.monitoringsystembackend.models.auth.RefreshTokenRequestDto;
 import cz.jirikfi.monitoringsystembackend.models.auth.RegisterRequestDto;
 import cz.jirikfi.monitoringsystembackend.models.auth.UserInfoDto;
@@ -38,8 +39,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserPrincipal principal) {
-        authService.logout(principal);
+    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequestDto request) {
+        authService.logout(request);
         return ResponseEntity.noContent().build();
     }
 

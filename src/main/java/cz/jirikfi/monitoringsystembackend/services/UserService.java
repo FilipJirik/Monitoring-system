@@ -41,29 +41,32 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public User getUser(UUID id) {
-        return userRepository.findById(id).orElseThrow(() ->
-                new NotFoundException("User with id " + id + " not found"));
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
     }
+
     @Transactional(readOnly = true)
     public Device getDevice(UUID id) {
-        return deviceRepository.findById(id).orElseThrow(() ->
-                new NotFoundException("Device with id " + id + " not found"));
+        return deviceRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Device with id " + id + " not found"));
     }
+
     @Transactional
     public User createUser(CreateUserRequestDto model) {
         if (userRepository.existsByEmail(model.getEmail())) {
-            throw new ConflictException("User with email " + model.getUsername() + " already exists");
+            throw new ConflictException("User with email " + model.getEmail() + " already exists");
         }
 
         User user = User.builder()
-             .username(model.getUsername())
-             .email(model.getEmail())
-             .password(passwordEncoder.encode(model.getPassword()))
-             .build();
+                .username(model.getUsername())
+                .email(model.getEmail())
+                .password(passwordEncoder.encode(model.getPassword()))
+                .build();
 
         userRepository.save(user);
         return user;
     }
+
     @Transactional
     public User updateUser(UUID id, UpdateUserRequestDto model) {
         User user = getUser(id);
@@ -75,14 +78,18 @@ public class UserService {
             }
         }
 
-        if (model.getUsername() != null) user.setUsername(model.getUsername());
-        if (model.getEmail() != null) user.setEmail(model.getEmail());
-        if (model.getPassword() != null) user.setPassword(passwordEncoder.encode(model.getPassword()));
+        if (model.getUsername() != null)
+            user.setUsername(model.getUsername());
+        if (model.getEmail() != null)
+            user.setEmail(model.getEmail());
+        if (model.getPassword() != null)
+            user.setPassword(passwordEncoder.encode(model.getPassword()));
 
         userRepository.save(user);
 
         return user;
     }
+
     @Transactional
     public void deleteUser(UUID id) {
         User user = getUser(id);
@@ -91,9 +98,11 @@ public class UserService {
             userRepository.delete(user);
         }
     }
+
     @Transactional
     public void grantAccess(UUID userId, UUID deviceId, CreatePermissionRequestDto model) {
-        Optional<UserDeviceAccess> existingAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId);
+        Optional<UserDeviceAccess> existingAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId,
+                deviceId);
 
         if (existingAccess.isPresent()) {
             throw new ConflictException("User " + userId + " already has access to device " + deviceId);
@@ -110,10 +119,12 @@ public class UserService {
 
         userDeviceAccessRepository.save(userDeviceAccess);
     }
+
     @Transactional
     public void changePermission(UUID userId, UUID deviceId, UpdatePermissionRequestDto model) {
         UserDeviceAccess userDeviceAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId)
-                .orElseThrow(() -> new BadRequestException("User " + userId + " doesn't have access to device " + deviceId));
+                .orElseThrow(
+                        () -> new BadRequestException("User " + userId + " doesn't have access to device " + deviceId));
 
         userDeviceAccess.setPermissionLevel(model.getPermissionLevel());
         userDeviceAccessRepository.save(userDeviceAccess);
@@ -122,7 +133,8 @@ public class UserService {
     @Transactional
     public void revokeAccess(UUID userId, UUID deviceId) {
         UserDeviceAccess userDeviceAccess = userDeviceAccessRepository.findByUserIdAndDeviceId(userId, deviceId)
-                .orElseThrow(() -> new BadRequestException("User " + userId + " doesn't have access to device " + deviceId));
+                .orElseThrow(
+                        () -> new BadRequestException("User " + userId + " doesn't have access to device " + deviceId));
 
         userDeviceAccessRepository.delete(userDeviceAccess);
     }

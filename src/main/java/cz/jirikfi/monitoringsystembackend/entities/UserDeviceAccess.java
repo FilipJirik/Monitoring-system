@@ -40,6 +40,7 @@ public class UserDeviceAccess {
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 class UserDeviceAccessId implements java.io.Serializable {
     private UUID user;
     private UUID device;

@@ -10,6 +10,7 @@ import cz.jirikfi.monitoringsystembackend.mappers.AuthMapper;
 import cz.jirikfi.monitoringsystembackend.models.auth.AuthResponseDto;
 import cz.jirikfi.monitoringsystembackend.models.auth.ChangePasswordRequestDto;
 import cz.jirikfi.monitoringsystembackend.models.auth.LoginRequestDto;
+import cz.jirikfi.monitoringsystembackend.models.auth.LogoutRequestDto;
 import cz.jirikfi.monitoringsystembackend.models.auth.RefreshTokenRequestDto;
 import cz.jirikfi.monitoringsystembackend.models.auth.RegisterRequestDto;
 import cz.jirikfi.monitoringsystembackend.models.auth.UserInfoDto;
@@ -41,9 +42,6 @@ public class AuthService {
 
     @Transactional
     public AuthResponseDto register(RegisterRequestDto request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new ConflictException("Username already exists");
-        }
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ConflictException("Email already exists");
         }
@@ -63,6 +61,7 @@ public class AuthService {
 
         return authMapper.toAuthResponse(user, token, refreshToken);
     }
+
     @Transactional
     public AuthResponseDto login(LoginRequestDto request) {
         try {
@@ -70,9 +69,7 @@ public class AuthService {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getEmail(),
-                            request.getPassword()
-                    )
-            );
+                            request.getPassword()));
             UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
 
             User user = userRepository.findById(principal.getId())
@@ -81,7 +78,8 @@ public class AuthService {
             user.setLastLogin(Instant.now());
             userRepository.save(user);
 
-            String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getEmail(), String.valueOf(user.getRole()));
+            String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getEmail(),
+                    String.valueOf(user.getRole()));
             String refreshToken = refreshTokenService.createRefreshToken(user);
 
             log.info("User logged in: {}", user.getEmail());
@@ -92,10 +90,11 @@ public class AuthService {
             throw new UnauthorizedException("Invalid email or password");
         }
     }
+
     @Transactional
-    public void logout(UserPrincipal principal) {
-        refreshTokenService.deleteByUserId(principal.getId());
-        log.info("User logged out: {}", principal.getId());
+    public void logout(LogoutRequestDto request) {
+        refreshTokenService.deleteByToken(request.getRefreshToken());
+        log.info("User logged out");
     }
 
     @Transactional
@@ -118,7 +117,6 @@ public class AuthService {
         return new UserInfoDto(principal.getId(), principal.getUsername(), principal.getEmail(), principal.getRole());
     }
 
-
     @Transactional
     public AuthResponseDto refreshToken(RefreshTokenRequestDto request) {
         String incomingToken = request.getRefreshToken();
@@ -134,7 +132,8 @@ public class AuthService {
 
         User user = currentRefreshToken.getUser();
 
-        String newAccessToken = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
+        String newAccessToken = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getEmail(),
+                user.getRole().name());
         String newRefreshToken = refreshTokenService.createRefreshToken(user);
 
         return authMapper.toAuthResponse(user, newAccessToken, newRefreshToken);

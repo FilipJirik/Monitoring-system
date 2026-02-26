@@ -44,6 +44,15 @@ public abstract class BaseMetric implements Persistable<UUID> {
     @Column(name = "uptime_seconds")
     private Long uptimeSeconds;
 
+    @Column(name = "process_count")
+    private Integer processCount;
+
+    @Column(name = "tcp_connections_count")
+    private Integer tcpConnectionsCount;
+
+    @Column(name = "listening_ports_count")
+    private Integer listeningPortsCount;
+
     @Override
     public boolean isNew() { // used to inform Hibernate that it will never be updated - faster
         return true;

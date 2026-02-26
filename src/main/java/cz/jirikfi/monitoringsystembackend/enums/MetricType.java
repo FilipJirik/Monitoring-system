@@ -11,7 +11,10 @@ public enum MetricType {
     DISK_USAGE("Disk Usage", "%"),
     NETWORK_IN("Network In", "Kbps"),
     NETWORK_OUT("Network Out", "Kbps"),
-    UPTIME("Uptime", "s");
+    UPTIME("Uptime", "s"),
+    PROCESS_COUNT("Process Count", ""),
+    TCP_CONNECTIONS_COUNT("TCP Connections", ""),
+    LISTENING_PORTS_COUNT("Listening Ports", "");
 
     private final String label;
     private final String unit;

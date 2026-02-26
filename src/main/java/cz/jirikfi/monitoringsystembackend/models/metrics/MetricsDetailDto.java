@@ -19,5 +19,8 @@ public class MetricsDetailDto {
     private Double networkInKbps;
     private Double networkOutKbps;
     private Long uptimeSeconds;
+    private Integer processCount;
+    private Integer tcpConnectionsCount;
+    private Integer listeningPortsCount;
 
 }

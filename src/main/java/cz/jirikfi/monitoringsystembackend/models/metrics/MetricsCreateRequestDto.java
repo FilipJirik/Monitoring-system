@@ -50,4 +50,16 @@ public class MetricsCreateRequestDto {
     @PositiveOrZero(message = "Uptime must be greater than or equal to 0")
     @Nullable
     private Long uptimeSeconds;
+
+    @PositiveOrZero(message = "Process count must be greater than or equal to 0")
+    @Nullable
+    private Integer processCount;
+
+    @PositiveOrZero(message = "TCP connections count must be greater than or equal to 0")
+    @Nullable
+    private Integer tcpConnectionsCount;
+
+    @PositiveOrZero(message = "Listening ports count must be greater than or equal to 0")
+    @Nullable
+    private Integer listeningPortsCount;
 }

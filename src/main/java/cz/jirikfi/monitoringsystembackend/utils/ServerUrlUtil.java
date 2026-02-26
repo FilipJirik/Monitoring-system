@@ -11,7 +11,8 @@ import java.net.InetAddress;
 @Slf4j
 public class ServerUrlUtil {
 
-    private static final String SETUP_COMMAND_STRUCTURE = "./Monitoring-system-client-service setup --server-url=%s --device-id=%s --api-key=%s";
+    private static final String SETUP_COMMAND_STRUCTURE = "./monitoring-agent setup --server-url=%s --device-id=%s --api-key=%s";
+    private static final String DEFAULT_IP_ADDRESS = "127.0.0.1";
 
     @Value("${app.default-server-url:http://localhost:8080}")
     private String configuredServerUrl;
@@ -24,7 +25,7 @@ public class ServerUrlUtil {
             String host = uriComponents.getHost();      // eg. "localhost", "192.168.1.5"
             int port = uriComponents.getPort();         // eg. 8080, 80, 443
 
-            if (host == null || host.equals("localhost") || host.equals("127.0.0.1")) {
+            if (host == null || host.equals("localhost") || host.equals(DEFAULT_IP_ADDRESS)) {
                 host = InetAddress.getLocalHost().getHostAddress();
             }
 

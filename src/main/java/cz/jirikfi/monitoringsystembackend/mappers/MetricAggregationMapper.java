@@ -20,9 +20,17 @@ public class MetricAggregationMapper {
 
         target.setCpuFreqAvgMhz(toLong(source.getAvgCpuFreq()));
         target.setRamUsageMb(toLong(source.getAvgRamUsage()));
+
+        target.setProcessCount(toInteger(source.getAvgProcessCount()));
+        target.setTcpConnectionsCount(toInteger(source.getAvgTcpConnectionsCount()));
+        target.setListeningPortsCount(toInteger(source.getAvgListeningPortsCount()));
     }
 
     private Long toLong(Double value) {
         return value != null ? Math.round(value) : null;
+    }
+
+    private Integer toInteger(Double value) {
+        return value != null ? (int) Math.round(value) : null;
     }
 }
