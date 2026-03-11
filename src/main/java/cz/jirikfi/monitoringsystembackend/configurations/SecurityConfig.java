@@ -56,7 +56,8 @@ public class SecurityConfig {
                                 "/v3/api-docs**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/actuator/health"
                         ).permitAll() // Open endpoints
                         .requestMatchers(HttpMethod.POST, "/api/devices/*/metrics").permitAll()
                         .anyRequest().authenticated()

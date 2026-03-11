@@ -14,7 +14,8 @@ public enum MetricType {
     UPTIME("Uptime", "s"),
     PROCESS_COUNT("Process Count", ""),
     TCP_CONNECTIONS_COUNT("TCP Connections", ""),
-    LISTENING_PORTS_COUNT("Listening Ports", "");
+    LISTENING_PORTS_COUNT("Listening Ports", ""),
+    DEVICE_OFFLINE("Device Offline", "");
 
     private final String label;
     private final String unit;

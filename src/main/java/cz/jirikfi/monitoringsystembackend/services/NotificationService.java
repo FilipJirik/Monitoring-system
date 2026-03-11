@@ -25,9 +25,20 @@ public class NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
     private final AlertMapper alertMapper;
 
+    static final String TOPIC_ALERTS = "/topic/alerts";
+    static final String TOPIC_ALERTS_RESOLVED = "/topic/alerts/resolved";
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
+    private static final String COLOR_RESOLVED = "#4CAF50";
+    private static final String COLOR_TRIGGERED = "#d9534f";
+    private static final String SUBJECT_PREFIX_ALERT = "ALERT: ";
+    private static final String SUBJECT_PREFIX_RESOLVED = "RESOLVED: ";
+    private static final String HEADER_RESOLVED = "System Alert Resolved";
+    private static final String HEADER_TRIGGERED = "System Alert Triggered";
+    private static final String STATUS_RESOLVED = "RESOLVED";
+    private static final String STATUS_ACTIVE = "ACTIVE";
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            .withLocale(Locale.getDefault()).withZone(ZoneId.systemDefault());
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -48,28 +59,29 @@ public class NotificationService {
             String statusColor;
 
             if (alert.getIsResolved()) {
-                subject = String.format("RESOLVED: %s on device %s - %s",
+                subject = SUBJECT_PREFIX_RESOLVED + String.format("%s on device %s - %s",
                         alert.getMetricType().getLabel(), alert.getDevice().getName(), alert.getSeverity());
-                header = "System Alert Resolved";
-                headerColor = "#4CAF50"; // Green for resolved
-                statusText = "RESOLVED";
-                statusColor = "#4CAF50";
+                header = HEADER_RESOLVED;
+                headerColor = COLOR_RESOLVED;
+                statusText = STATUS_RESOLVED;
+                statusColor = COLOR_RESOLVED;
             } else {
-                subject = String.format("ALERT: %s on device %s - %s",
+                subject = SUBJECT_PREFIX_ALERT + String.format("%s on device %s - %s",
                         alert.getMetricType().getLabel(), alert.getDevice().getName(), alert.getSeverity());
-                header = "System Alert Triggered";
-                headerColor = "#d9534f"; // Red for triggered
-                statusText = "ACTIVE";
-                statusColor = "#d9534f";
+                header = HEADER_TRIGGERED;
+                headerColor = COLOR_TRIGGERED;
+                statusText = STATUS_ACTIVE;
+                statusColor = COLOR_TRIGGERED;
             }
             helper.setSubject(subject);
 
-            String htmlContent = String.format("""
+            String htmlContent = String.format(
+                    """
                             <html>
                             <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
                                 <h2 style="color: %s;">%s</h2>
                                 <p>An alert has been %s on device <strong>%s</strong>.</p>
-                            
+
                                 <table style="border-collapse: collapse; width: 100%%; max-width: 600px; margin-top: 15px;">
                                     <tr>
                                         <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Status:</strong></td>
@@ -94,9 +106,9 @@ public class NotificationService {
                                     </tr>
                                     %s <!-- Resolved Time Row -->
                                 </table>
-                            
+
                                 <p style="margin-top: 20px;"><strong>Details:</strong><br>%s</p>
-                            
+
                                 <p style="font-size: 12px; color: #777; margin-top: 30px;">
                                     This is an automated message from your Monitoring System. Please do not reply.
                                 </p>
@@ -112,13 +124,14 @@ public class NotificationService {
                     alert.getMetricType().getLabel(),
                     alert.getSeverity(),
                     alert.getMetricValue(),
-                    alert.getThresholdValue() != null ?
-                            String.format("<tr><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\"><strong>Threshold:</strong></td><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\">%s</td></tr>", alert.getThresholdValue()) : "",
+                    alert.getThresholdValue() != null ? String.format(
+                            "<tr><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\"><strong>Threshold:</strong></td><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\">%s</td></tr>",
+                            alert.getThresholdValue()) : "",
                     DATE_TIME_FORMATTER.format(alert.getCreatedAt()),
-                    alert.getResolvedAt() != null ?
-                            String.format("<tr><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\"><strong>Resolved At:</strong></td><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\">%s</td></tr>", DATE_TIME_FORMATTER.format(alert.getResolvedAt())) : "",
-                    alert.getMessage()
-            );
+                    alert.getResolvedAt() != null ? String.format(
+                            "<tr><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\"><strong>Resolved At:</strong></td><td style=\"padding: 8px; border-bottom: 1px solid #ddd;\">%s</td></tr>",
+                            DATE_TIME_FORMATTER.format(alert.getResolvedAt())) : "",
+                    alert.getMessage());
 
             helper.setText(htmlContent, true);
 
@@ -132,13 +145,7 @@ public class NotificationService {
 
     public void sendFrontendAlert(Alert alert) {
         try {
-            String destination;
-            if (alert.getIsResolved()) {
-                destination = "/topic/alerts/resolved";
-            } else {
-                destination = "/topic/alerts";
-            }
-
+            String destination = alert.getIsResolved() ? TOPIC_ALERTS_RESOLVED : TOPIC_ALERTS;
             AlertDetailDto payload = alertMapper.toDetailModel(alert);
 
             messagingTemplate.convertAndSend(destination, payload);

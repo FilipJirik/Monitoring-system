@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class SystemSettingsService {
+public class SystemSettingsCacheService {
 
     private final SystemSettingsRepository settingsRepository;
 

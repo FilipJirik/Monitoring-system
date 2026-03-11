@@ -27,8 +27,11 @@ public class MetricUtil {
             case NETWORK_OUT -> metric.getNetworkOutKbps();
             case UPTIME -> metric.getUptimeSeconds() != null ? metric.getUptimeSeconds().doubleValue() : null;
             case PROCESS_COUNT -> metric.getProcessCount() != null ? metric.getProcessCount().doubleValue() : null;
-            case TCP_CONNECTIONS_COUNT -> metric.getTcpConnectionsCount() != null ? metric.getTcpConnectionsCount().doubleValue() : null;
-            case LISTENING_PORTS_COUNT -> metric.getListeningPortsCount() != null ? metric.getListeningPortsCount().doubleValue() : null;
+            case TCP_CONNECTIONS_COUNT ->
+                metric.getTcpConnectionsCount() != null ? metric.getTcpConnectionsCount().doubleValue() : null;
+            case LISTENING_PORTS_COUNT ->
+                metric.getListeningPortsCount() != null ? metric.getListeningPortsCount().doubleValue() : null;
+            case DEVICE_OFFLINE -> null;
         };
     }
 }

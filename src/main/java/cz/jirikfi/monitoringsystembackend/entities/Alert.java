@@ -5,6 +5,8 @@ import cz.jirikfi.monitoringsystembackend.enums.MetricType;
 import cz.jirikfi.monitoringsystembackend.utils.UuidGenerator;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -55,5 +57,6 @@ public class Alert {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "resolved_by")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private User resolvedBy;
 }

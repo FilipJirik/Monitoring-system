@@ -4,7 +4,7 @@ import cz.jirikfi.monitoringsystembackend.entities.SystemSettings;
 import cz.jirikfi.monitoringsystembackend.mappers.SystemSettingsMapper;
 import cz.jirikfi.monitoringsystembackend.models.settings.SettingsUpdateRequestDto;
 import cz.jirikfi.monitoringsystembackend.models.settings.SettingsResponseDto;
-import cz.jirikfi.monitoringsystembackend.services.SystemSettingsService;
+import cz.jirikfi.monitoringsystembackend.services.SystemSettingsCacheService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class SettingsController {
 
-    private final SystemSettingsService systemSettingsService;
+    private final SystemSettingsCacheService systemSettingsService;
     private final SystemSettingsMapper systemSettingsMapper;
 
     // GET /api/settings GET current global settings

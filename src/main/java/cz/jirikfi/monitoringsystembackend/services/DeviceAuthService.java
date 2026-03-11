@@ -4,12 +4,10 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.hash.Hashing;
 import cz.jirikfi.monitoringsystembackend.configurations.CacheConfig;
-import cz.jirikfi.monitoringsystembackend.entities.Device;
 import cz.jirikfi.monitoringsystembackend.entities.DevicePrincipal;
 import cz.jirikfi.monitoringsystembackend.repositories.DeviceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -20,7 +18,6 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -54,12 +51,6 @@ public class DeviceAuthService {
                 .map(device -> new DevicePrincipal(device.getId(), device.getName()))
                 .orElse(null);
     }
-
-    @CacheEvict(value = CacheConfig.DEVICE_API_KEYS, key = "#oldRawApiKey")
-    public void invalidateKey(String oldRawApiKey) {
-        log.info("Invalidating API Key cache");
-    }
-
 
     // Used for updating lastSeen time for devices - throttle it to one minute to reduce db calls
 

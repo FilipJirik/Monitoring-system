@@ -28,7 +28,7 @@ public class MetricsReadingService {
     private final MetricsRepository metricsRepository;
     private final MetricsHourlyRepository metricHourlyRepository;
     private final MetricsDailyRepository metricDailyRepository;
-    private final SystemSettingsService settingsService;
+    private final SystemSettingsCacheService settingsService;
     private final AuthorizationService authorizationService;
     private final MetricsMapper metricsMapper;
 

@@ -5,9 +5,6 @@ import cz.jirikfi.monitoringsystembackend.utils.UuidGenerator;
 import jakarta.persistence.*;
 
 import lombok.*;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
 import java.util.*;
@@ -47,17 +44,22 @@ public class User {
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "owner")
     @Builder.Default
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.SET_NULL)
     private Set<Device> ownedDevices = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<UserDeviceAccess> deviceAccesses = new HashSet<>();
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<AlertRecipient> alertRecipients = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "resolvedBy")
     @Builder.Default
     private Set<Alert> resolvedAlerts = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<RefreshToken> refreshTokens = new HashSet<>();
 }

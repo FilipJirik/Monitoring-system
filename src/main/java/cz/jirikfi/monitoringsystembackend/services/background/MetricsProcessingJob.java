@@ -7,7 +7,7 @@ import cz.jirikfi.monitoringsystembackend.repositories.MetricsDailyRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.MetricsHourlyRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.MetricsRepository;
 import cz.jirikfi.monitoringsystembackend.repositories.projections.AggregatedMetric;
-import cz.jirikfi.monitoringsystembackend.services.SystemSettingsService;
+import cz.jirikfi.monitoringsystembackend.services.SystemSettingsCacheService;
 import cz.jirikfi.monitoringsystembackend.utils.UuidGenerator;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class MetricsProcessingJob {
     private final MetricsDailyRepository metricsDailyRepository;
     private final DeviceRepository deviceRepository;
 
-    private final SystemSettingsService settingsService;
+    private final SystemSettingsCacheService settingsService;
     private final JobScheduler jobScheduler;
     private final MetricAggregationMapper aggregationMapper;
 

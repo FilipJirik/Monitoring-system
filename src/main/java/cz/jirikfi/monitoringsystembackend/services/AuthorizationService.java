@@ -82,6 +82,4 @@ public class AuthorizationService {
         return deviceRepository.findByIdAndUserEditAccess(deviceId, principal.getId())
                 .orElseThrow(() -> new ForbiddenException("You don't have permission to edit this device"));
     }
-
-
 }

@@ -2,7 +2,9 @@ package cz.jirikfi.monitoringsystembackend.services;
 
 import cz.jirikfi.monitoringsystembackend.entities.Alert;
 import cz.jirikfi.monitoringsystembackend.entities.AlertThreshold;
+import cz.jirikfi.monitoringsystembackend.entities.Device;
 import cz.jirikfi.monitoringsystembackend.entities.Metrics;
+import cz.jirikfi.monitoringsystembackend.enums.MetricType;
 import cz.jirikfi.monitoringsystembackend.enums.ThresholdOperator;
 import cz.jirikfi.monitoringsystembackend.models.metrics.MetricsSavedEvent;
 import cz.jirikfi.monitoringsystembackend.repositories.AlertRepository;
@@ -34,7 +36,6 @@ public class AlertProcessingService {
     private final MetricsRepository metricsRepository;
 
     private final JobScheduler jobScheduler;
-
 
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -70,20 +71,22 @@ public class AlertProcessingService {
         Optional<Alert> activeAlert = alertRepository
                 .findFirstByDeviceIdAndMetricTypeAndIsResolvedFalse(
                         metric.getDevice().getId(),
-                        threshold.getMetricType()
-                );
+                        threshold.getMetricType());
 
         if (isBreached && activeAlert.isEmpty()) { // Scenario: New Problem detected
             createAlertAndNotify(metric, threshold, currentValue);
-        }
-        else if (!isBreached && activeAlert.isPresent()) { // Scenario: Problem recovered
+        } else if (!isBreached && activeAlert.isPresent()) { // Scenario: Problem recovered
             resolveAlert(activeAlert.get(), currentValue);
         }
 
-        //  Do not send another notification if already breached
+        // Do not send another notification if already breached
     }
 
     private String buildAlertMessage(AlertThreshold threshold, Double currentValue) {
+        if (threshold.getMetricType() == MetricType.DEVICE_OFFLINE) {
+            return "Device has gone offline and stopped sending metrics.";
+        }
+
         String operatorSymbol;
         String comparisonText = switch (threshold.getOperator()) {
             case GREATER_THAN -> {
@@ -111,8 +114,9 @@ public class AlertProcessingService {
                 yield "breached";
             }
         };
-        
-        if (threshold.getOperator() == ThresholdOperator.IS_NULL || threshold.getOperator() == ThresholdOperator.IS_NOT_NULL) {
+
+        if (threshold.getOperator() == ThresholdOperator.IS_NULL
+                || threshold.getOperator() == ThresholdOperator.IS_NOT_NULL) {
             return String.format("%s value %s",
                     threshold.getMetricType().getLabel(),
                     comparisonText);
@@ -127,10 +131,14 @@ public class AlertProcessingService {
     }
 
     public void createAlertAndNotify(Metrics metric, AlertThreshold threshold, Double currentValue) {
+        createAlertAndNotify(metric.getDevice(), threshold, currentValue);
+    }
+
+    public void createAlertAndNotify(Device device, AlertThreshold threshold, Double currentValue) {
         String message = buildAlertMessage(threshold, currentValue);
 
         Alert alert = Alert.builder()
-                .device(metric.getDevice())
+                .device(device)
                 .metricType(threshold.getMetricType())
                 .severity(threshold.getSeverity())
                 .thresholdValue(threshold.getThresholdValue())
@@ -142,7 +150,7 @@ public class AlertProcessingService {
 
         alertRepository.save(alert);
 
-        log.warn("NEW ALERT: Device {} - {}", metric.getDevice().getName(), message);
+        log.warn("NEW ALERT: Device {} - {}", device.getName(), message);
 
         jobScheduler.enqueue(() -> notificationJobService.processAlertNotifications(alert.getId()));
     }
@@ -150,10 +158,15 @@ public class AlertProcessingService {
     public void resolveAlert(Alert alert, Double currentValue) {
         alert.setIsResolved(true);
         alert.setResolvedAt(Instant.now());
-        alert.setMetricValue(currentValue); // Update with the value that caused resolution
-        alert.setMessage(String.format("%s value (%s) is back to normal.",
-                alert.getMetricType().getLabel(),
-                currentValue)); // Set a clear resolved message
+        alert.setMetricValue(currentValue);
+
+        if (alert.getMetricType() == MetricType.DEVICE_OFFLINE) {
+            alert.setMessage("Device is back online and sending metrics.");
+        } else {
+            alert.setMessage(String.format("%s value (%s) is back to normal.",
+                    alert.getMetricType().getLabel(),
+                    currentValue));
+        }
 
         alertRepository.save(alert);
 

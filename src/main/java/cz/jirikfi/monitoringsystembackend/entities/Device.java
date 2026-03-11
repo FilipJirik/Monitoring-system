@@ -4,6 +4,8 @@ import cz.jirikfi.monitoringsystembackend.utils.UuidGenerator;
 import jakarta.persistence.*;
 
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.util.*;
@@ -61,8 +63,9 @@ public class Device {
     @Column(name = "image_filename")
     private String imageFilename = "default.png";
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "owner_id", nullable = false)
+    @ManyToOne()
+    @JoinColumn(name = "owner_id")
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private User owner;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", cascade = CascadeType.ALL)
