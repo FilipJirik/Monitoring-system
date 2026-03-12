@@ -179,10 +179,6 @@ Pro funkční e-mailová upozornění je nutné mít platný e-mailový účet p
    ```
 ---
 
-## Snímky obrazovky
-
----
-
 ## API Endpointy
 
 ### Autentizace (`/api/auth`)

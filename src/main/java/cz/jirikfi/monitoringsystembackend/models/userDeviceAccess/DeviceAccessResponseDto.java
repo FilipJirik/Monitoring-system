@@ -12,5 +12,5 @@ import java.util.UUID;
 public class DeviceAccessResponseDto{
     private UUID deviceId;
     private String deviceName;
-    private String permissionLevel; // "OWNER", "READ", "EDIT"
+    private String permissionLevel; // "OWNER", "READ", "EDIT" easier for frontend
 }

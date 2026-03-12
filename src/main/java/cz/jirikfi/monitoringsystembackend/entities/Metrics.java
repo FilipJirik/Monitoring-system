@@ -2,7 +2,10 @@ package cz.jirikfi.monitoringsystembackend.entities;
 
 import cz.jirikfi.monitoringsystembackend.utils.UuidGenerator;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.util.UUID;

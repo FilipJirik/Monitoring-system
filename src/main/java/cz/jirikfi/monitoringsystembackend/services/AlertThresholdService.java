@@ -26,7 +26,7 @@ public class AlertThresholdService {
 
     @Transactional(readOnly = true)
     public List<ThresholdResponseDto> getThresholdsByDeviceId(UserPrincipal principal, UUID deviceId) {
-        // Lightweight check - we don't need the Device entity, just working with thresholds
+        // Lightweight check - don't need the Device entity, just working with thresholds
         authorizationService.verifyReadAccess(deviceId, principal);
 
         return alertThresholdRepository.findByDevice_IdOrderByMetricType(deviceId).stream()
@@ -36,7 +36,7 @@ public class AlertThresholdService {
 
     @Transactional
     public ThresholdResponseDto createThreshold(UserPrincipal principal, UUID deviceId, CreateThresholdRequestDto request) {
-        // Secure fetch - we need the Device entity to pass to the mapper
+        // Secure fetch - need the Device entity to pass to the mapper
         Device device = authorizationService.getDeviceWithEditAccess(deviceId, principal);
 
         AlertThreshold threshold = alertThresholdMapper.createToEntity(request, device);
@@ -55,7 +55,6 @@ public class AlertThresholdService {
             throw new BadRequestException("Threshold " + thresholdId + " does not belong to device " + deviceId);
         }
 
-        // We already have the device from the threshold, use old pattern
         authorizationService.verifyEditPermission(principal, threshold.getDevice());
 
         alertThresholdMapper.updateEntity(threshold, request);
@@ -74,7 +73,6 @@ public class AlertThresholdService {
             throw new BadRequestException("Threshold " + thresholdId + " does not belong to device " + deviceId);
         }
 
-        // We already have the device from the threshold, use old pattern
         authorizationService.verifyEditPermission(principal, threshold.getDevice());
 
         alertThresholdRepository.delete(threshold);

@@ -36,24 +36,23 @@ public class DeviceAuthService {
         return base64Encoder.encodeToString(randomBytes);
     }
 
-    public String hashApiKey(String rawKey) {
+    public String hashApiKey(String rawKey, UUID deviceId) {
         return Hashing.sha256()
-                .hashString(rawKey, StandardCharsets.UTF_8)
+                .hashString(rawKey + deviceId.toString(), StandardCharsets.UTF_8)
                 .toString();
     }
 
-    @Cacheable(value = CacheConfig.DEVICE_API_KEYS, key = "#rawApiKey", unless = "#result == null")
+    @Cacheable(value = CacheConfig.DEVICE_API_KEYS, key = "#rawApiKey + '-' + #deviceId", unless = "#result == null")
     @Transactional(readOnly = true)
-    public DevicePrincipal resolveDeviceByApiKey(String rawApiKey) {
-        String incomingHash = hashApiKey(rawApiKey);
+    public DevicePrincipal resolveDeviceByApiKey(String rawApiKey, UUID deviceId) {
+        String incomingHash = hashApiKey(rawApiKey, deviceId);
 
-        return deviceRepository.findAuthDataByApiKey(incomingHash)
+        return deviceRepository.findByIdAndApiKey(deviceId, incomingHash)
                 .map(device -> new DevicePrincipal(device.getId(), device.getName()))
                 .orElse(null);
     }
 
     // Used for updating lastSeen time for devices - throttle it to one minute to reduce db calls
-
     private final Cache<UUID, Boolean> activityCache = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofMinutes(1))
             .build();
@@ -62,13 +61,8 @@ public class DeviceAuthService {
     @Transactional
     public void updateLastSeen(UUID deviceId) {
         if (activityCache.getIfPresent(deviceId) == null) {
-
-            deviceRepository.findById(deviceId).ifPresent(device -> {
-                device.setLastSeen(Instant.now());
-                deviceRepository.save(device);
-
-                activityCache.put(deviceId, true);
-            });
+            deviceRepository.updateLastSeen(deviceId, Instant.now());
+            activityCache.put(deviceId, true);
         }
     }
 

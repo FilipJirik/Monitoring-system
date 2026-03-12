@@ -61,7 +61,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InternalErrorException.class)
     public ResponseEntity<ApiErrorMessage> handleCustomInternalError(InternalErrorException ex, HttpServletRequest request) {
         log.error("Application Internal error", ex);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An internal error occurred", request);
     }
 
     @ExceptionHandler(Exception.class)

@@ -60,6 +60,8 @@ app:
     admin-password: ${APP_ADMIN_PASSWORD}
     bcrypt-rounds: 12
   default-server-url: http://localhost:8080
+  cors:
+    allowed-origins: "http://localhost:5173"
 
 # Background tasks
 jobrunr:
@@ -84,4 +86,4 @@ management:
         include: health,info,metrics
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized

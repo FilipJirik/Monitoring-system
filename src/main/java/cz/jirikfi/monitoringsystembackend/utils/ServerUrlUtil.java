@@ -28,6 +28,9 @@ public class ServerUrlUtil {
             if (host == null || host.equals("localhost") || host.equals(DEFAULT_IP_ADDRESS)) {
                 host = InetAddress.getLocalHost().getHostAddress();
             }
+            if (port == -1 || port == 80 || port == 443) {
+                return scheme + "://" + host;
+            }
 
             return scheme + "://" + host + ":" + port;
 

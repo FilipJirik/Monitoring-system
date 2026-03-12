@@ -5,6 +5,7 @@ import cz.jirikfi.monitoringsystembackend.entities.Metrics;
 import cz.jirikfi.monitoringsystembackend.repositories.projections.AggregatedMetric;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -37,6 +38,8 @@ public interface MetricsRepository extends JpaRepository<Metrics, UUID> {
           AND m.timestamp >= :from
           AND m.timestamp < :to
     """)
-    AggregatedMetric findAggregatedValues(UUID deviceId, Instant from, Instant to);
+    AggregatedMetric findAggregatedValues(@Param("deviceId") UUID deviceId,
+                                          @Param("from") Instant from,
+                                          @Param("to") Instant to);
     void deleteByTimestampBefore(Instant timestamp);
 }

@@ -3,7 +3,6 @@ package cz.jirikfi.monitoringsystembackend.entities;
 import cz.jirikfi.monitoringsystembackend.enums.Role;
 import cz.jirikfi.monitoringsystembackend.utils.UuidGenerator;
 import jakarta.persistence.*;
-
 import lombok.*;
 
 import java.time.Instant;

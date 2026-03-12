@@ -57,7 +57,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             UUID deviceIdFromUrl = UUID.fromString(variables.get("deviceId"));
 
             // Get device principal from cache
-            DevicePrincipal principal = deviceAuthService.resolveDeviceByApiKey(rawApiKey);
+            DevicePrincipal principal = deviceAuthService.resolveDeviceByApiKey(rawApiKey, deviceIdFromUrl);
 
             if (principal != null && principal.getDeviceId().equals(deviceIdFromUrl)) {
 

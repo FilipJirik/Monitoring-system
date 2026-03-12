@@ -60,7 +60,6 @@ public class AlertService {
         boolean isAdmin = principal.getRole() == Role.ADMIN;
         boolean isRecipient = alertRecipientRepository.existsByUserIdAndDeviceId(principal.getId(), alert.getDevice().getId());
 
-        // Permission check
         if (!isAdmin && !isRecipient) {
             log.warn("Unauthorized resolve attempt for alert {} by user {}", alertId, principal.getId());
             throw new ForbiddenException("You don't have permission to resolve this alert");

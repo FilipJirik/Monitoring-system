@@ -41,10 +41,12 @@ public class AlertProcessingService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMetricsSaved(MetricsSavedEvent event) {
-
-        Metrics metric = metricsRepository.findById(event.metricId()).orElseThrow();
-
-        checkThresholds(metric);
+        try {
+            Metrics metric = metricsRepository.findById(event.metricId()).orElseThrow();
+            checkThresholds(metric);
+        } catch (Exception e) {
+            log.error("Error while processing alerts for metric {}: {}", event.metricId(), e.getMessage(), e);
+        }
     }
 
     public void checkThresholds(Metrics metric) {
@@ -78,7 +80,6 @@ public class AlertProcessingService {
         } else if (!isBreached && activeAlert.isPresent()) { // Scenario: Problem recovered
             resolveAlert(activeAlert.get(), currentValue);
         }
-
         // Do not send another notification if already breached
     }
 

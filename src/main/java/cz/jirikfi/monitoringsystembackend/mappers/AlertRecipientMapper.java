@@ -1,8 +1,6 @@
 package cz.jirikfi.monitoringsystembackend.mappers;
 
 import cz.jirikfi.monitoringsystembackend.entities.AlertRecipient;
-import cz.jirikfi.monitoringsystembackend.entities.User;
-import cz.jirikfi.monitoringsystembackend.enums.Role;
 import cz.jirikfi.monitoringsystembackend.models.recipients.RecipientResponseDto;
 import cz.jirikfi.monitoringsystembackend.models.recipients.RecipientStatusDto;
 import cz.jirikfi.monitoringsystembackend.repositories.projections.RecipientStatus;

@@ -51,7 +51,7 @@ public class DeviceService {
         device.setImageFilename(defaultPictureFilename);
 
         String rawApiKey = deviceAuthService.generateRawApiKey();
-        String hashedKey = deviceAuthService.hashApiKey(rawApiKey);
+        String hashedKey = deviceAuthService.hashApiKey(rawApiKey, device.getId());
 
         device.setApiKey(hashedKey);
 
@@ -106,7 +106,6 @@ public class DeviceService {
         tryDeleteDeviceImage(oldFilename);
     }
 
-
     @Transactional
     public void resetDevicePicture(UserPrincipal principal, UUID id) {
         Device device = authorizationService.getDeviceWithEditAccess(id, principal);
@@ -130,7 +129,7 @@ public class DeviceService {
         Device device = authorizationService.getDeviceWithEditAccess(id, principal);
 
         String rawApiKey = deviceAuthService.generateRawApiKey();
-        String hashedKey = deviceAuthService.hashApiKey(rawApiKey);
+        String hashedKey = deviceAuthService.hashApiKey(rawApiKey, device.getId());
 
         device.setApiKey(hashedKey);
         device.setUpdatedAt(Instant.now());

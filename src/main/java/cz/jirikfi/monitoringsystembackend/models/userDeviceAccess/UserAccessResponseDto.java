@@ -12,5 +12,5 @@ public class UserAccessResponseDto {
     private UUID userId;
     private String username;
     private String email;
-    private String permissionLevel; // "OWNER", "READ", "EDIT"
+    private String permissionLevel; // "OWNER", "READ", "EDIT" easier for frontend
 }

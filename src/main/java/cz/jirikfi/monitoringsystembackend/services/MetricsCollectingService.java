@@ -18,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-
-
 @Service
 @RequiredArgsConstructor
 public class MetricsCollectingService {
@@ -27,7 +25,6 @@ public class MetricsCollectingService {
     private final MetricsMapper metricsMapper;
     private final DeviceRepository deviceRepository;
     private final MetricsRepository metricRepository;
-    private final AlertProcessingService alertProcessingService;
     private final SimpMessagingTemplate messagingTemplate;
     private final ApplicationEventPublisher eventPublisher;
 

@@ -177,10 +177,6 @@ To enable email alerts, you need a valid email account for sending notifications
 
 ---
 
-## Screenshots
-
----
-
 ## API Endpoints
 
 ### Authentication (`/api/auth`)

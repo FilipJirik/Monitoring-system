@@ -2,7 +2,6 @@ package cz.jirikfi.monitoringsystembackend.entities;
 
 import cz.jirikfi.monitoringsystembackend.utils.UuidGenerator;
 import jakarta.persistence.*;
-
 import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
@@ -63,7 +62,7 @@ public class Device {
     @Column(name = "image_filename")
     private String imageFilename = "default.png";
 
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private User owner;

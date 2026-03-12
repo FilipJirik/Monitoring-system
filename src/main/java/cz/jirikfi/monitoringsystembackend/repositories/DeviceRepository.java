@@ -6,10 +6,12 @@ import cz.jirikfi.monitoringsystembackend.repositories.projections.DeviceAuth;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,6 +22,7 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
 
     @Query(value = """
         SELECT DISTINCT d FROM Device d
+        LEFT JOIN FETCH d.owner
         LEFT JOIN d.userAccesses ua
         WHERE(
             (:keyword IS NULL OR :keyword = '') OR
@@ -76,6 +79,7 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
 
     @Query("""
         SELECT d FROM Device d
+        LEFT JOIN FETCH d.owner
         LEFT JOIN d.userAccesses ua
         WHERE d.id = :deviceId
           AND (d.owner.id = :userId OR ua.user.id = :userId)
@@ -85,6 +89,7 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
 
     @Query("""
         SELECT d FROM Device d
+        LEFT JOIN FETCH d.owner
         LEFT JOIN d.userAccesses ua
         WHERE d.id = :deviceId
           AND (d.owner.id = :userId OR (ua.user.id = :userId AND ua.permissionLevel = 'EDIT'))
@@ -93,8 +98,13 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
                                                @Param("userId") UUID userId);
 
     @Query("SELECT d.id as id, d.name as name, d.apiKey as apiKey, d.lastSeen as lastSeen " +
-            "FROM Device d WHERE d.apiKey = :hash")
-    Optional<DeviceAuth> findAuthDataByApiKey(@Param("hash") String hash);
+            "FROM Device d WHERE d.id = :id AND d.apiKey = :apiKey")
+    Optional<DeviceAuth> findByIdAndApiKey(@Param("id") UUID id, @Param("apiKey") String apiKey);
+
+
+    @Modifying
+    @Query("UPDATE Device d SET d.lastSeen = :lastSeen WHERE d.id = :id")
+    void updateLastSeen(@Param("id") UUID id, @Param("lastSeen") Instant lastSeen);
 
     @Query(value = """
         SELECT
