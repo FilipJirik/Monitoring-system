@@ -1,0 +1,9 @@
+target/
+.git/
+.idea/
+.vscode/
+frontend/
+uploads/
+mvnw
+mvnw.cmd
+.mvn/

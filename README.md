@@ -6,9 +6,11 @@
     <path d="M18 31H24L28 23L34 37L38 31H46" stroke="#F4F4F5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
 
-  <h1 align="center">Monitoring System — Backend</h1>
+  <h1 align="center">Monitoring System</h1>
   <p align="center">
-    Spring Boot REST API for collecting system metrics, aggregating historical data, and sending alerts.
+    Application for collecting, monitoring, and visualizing system metrics from Linux devices.
+    <br />
+    Contains a <strong>Spring Boot</strong> backend API and a <strong>React</strong> frontend.
     <br />
     Part of the <strong>Aplikace pro sběr, monitoring a vizualizaci dat počítačů a serverů</strong> project.
   </p>
@@ -20,19 +22,21 @@
 
 ## About
 
-The **Monitoring System Backend** handles the server side of a device monitoring platform. It receives metrics from distributed Linux agents, stores them in PostgreSQL, aggregates them into hourly/daily summaries, and triggers alerts when thresholds are exceeded.
+This repository contains the **Backend API** (Spring Boot) and the **Frontend** (React) for a device monitoring platform. The entire stack — PostgreSQL, Backend, and Frontend can be deployed as a single unit using Docker Compose.
 
 ### What it does
 
 - **Metrics ingestion** — REST endpoints for receiving system metrics (CPU, RAM, disk, network, etc.) from agents authenticated via API keys.
-- **Data aggregation** — Background jobs (via JobRunr) automatically roll up raw metrics into hourly and daily summaries for efficient long-term queries.
-- **Alerting** — Monitors incoming metrics against user-defined thresholds. Sends notifications via email (SMTP) and real-time WebSocket messages.
-- **User & device management** — Role-based access control (Admin / User) with per-device permissions. Users can only see devices they've been granted access to.
-- **Device lifecycle** — Registration, online/offline status tracking, SSH detection, profile images, and API key management.
+- **Data aggregation** — Background jobs (via JobRunr) automatically roll up raw metrics into hourly and daily summaries for historical data.
+- **Alerting** — Monitors incoming metrics against user-defined thresholds. Sends notifications via email (SMTP) and real-time via WebSocket to the frontend.
+- **User management** — Role-based access control (Admin / User) with per-device permissions. Users can only see devices they've been granted access to.
+- **Device management** — Registration, online/offline status tracking, device info, images, and API key management.
 
 ---
 
 ## Tech Stack
+
+### Backend
 
 | Layer | Technology |
 |---|---|
@@ -40,26 +44,36 @@ The **Monitoring System Backend** handles the server side of a device monitoring
 | Database | PostgreSQL |
 | Security | Spring Security + JWT (stateless) |
 | Data Access | Spring Data JPA + Hibernate |
-| Caching | Caffeine (in-memory) |
+| Caching | Caffeine |
 | Background Jobs | JobRunr |
 | Real-time | WebSocket (STOMP) |
 | Email | Spring Mail (SMTP) |
 | API Docs | SpringDoc OpenAPI 3 / Swagger UI |
-| Validation | Jakarta Validation + custom validators |
+| Validation | Jakarta Validation + custom |
+
+### Frontend
+
+| Layer | Technology |
+|---|---|
+| Framework | React 19 (Vite + TypeScript) |
+| Styling | Tailwind CSS 4 |
+| Charts | Recharts |
+| Maps | Leaflet |
+| State | Zustand |
+| Real-time | STOMP WebSocket |
+
+### Infrastructure
+
+| Component | Role |
+|---|---|
+| Docker Compose | Container orchestration |
+| Nginx | Reverse proxy, static file serving, SSL termination |
 
 ---
 
-## Frontend & Agent
+## Client Agent
 
-### Frontend
-A **React 19** dashboard (Vite + TypeScript + Tailwind CSS 4) for visualizing metrics, managing devices, and configuring alerts.
-- Interactive charts via **Recharts**
-- Device location maps via **Leaflet**
-- Client-side state management with **Zustand**
-- Real-time updates via **STOMP** WebSocket
-
-### Client Agent
-A lightweight **.NET 9** Linux daemon that collects system metrics and sends them to this backend. Supports automatic hardware detection, configurable intervals, and self-signed certificates.
+A lightweight **.NET 9** Linux daemon that collects system metrics and sends them to the backend. Supports automatic hardware detection, configurable intervals, and self-signed certificates. Available on [GitHub](https://github.com/FilipJirik/Monitoring-system-agent).
 
 ---
 
@@ -67,9 +81,10 @@ A lightweight **.NET 9** Linux daemon that collects system metrics and sends the
 
 ### Prerequisites
 
-- **Java 21** (JDK)
-- **Docker** and **Docker Compose** (for PostgreSQL)
-- **Maven** (or use the included `mvnw` wrapper)
+- **Docker** and **Docker Compose**
+- **OpenSSL** — for generating self-signed SSL certificates
+
+> For development without Docker, you'll also need **Java 21** (JDK), **Maven** (or the included `mvnw` wrapper), and **Node.js**.
 
 ### Configuration
 
@@ -92,75 +107,77 @@ MAIL_PASSWORD=your_gmail_app_password
 
 > On first startup, an admin account is created automatically using `APP_ADMIN_EMAIL` and `APP_ADMIN_PASSWORD`.
 
+### Generating SSL Certificates
+
+Before running the application, generate a self-signed certificate for Nginx. The certificate files must be placed in `frontend/certs/`:
+
+```bash
+cd frontend/certs
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout nginx.key -out nginx.crt
+```
+
 ### Running Locally
 
-1. **Start the database:**
+Start the entire stack with Docker Compose:
+
+```bash
+docker compose up --build -d
+```
+
+This starts three containers: **PostgreSQL**, **Backend** (Spring Boot), and **Frontend** (Nginx).
+
+The application will be available at **`https://localhost`**.
+
+> Your browser will show a certificate warning because the SSL certificate is self-signed.
+
+**Useful links:**
+- **Application:** `https://localhost`
+- **Swagger UI:** `https://localhost/api/swagger-ui/index.html`
+- **JobRunr Dashboard:** `http://localhost:8000/dashboard`
+
+### Standalone Development Mode
+
+For development without Docker, you can run the backend and frontend individually:
+
+1. **Start PostgreSQL:**
    ```bash
-   docker-compose up -d
+   docker compose up postgres -d
    ```
-2. **Start the application:**
+2. **Start the backend:**
    ```bash
    ./mvnw spring-boot:run
    ```
+   The API starts at `http://localhost:8080`.
 
-The server starts at `http://localhost:8080`.
-
-**Useful links while running:**
-- **Swagger UI:** `http://localhost:8080/swagger-ui/index.html`
-- **JobRunr Dashboard:** `http://localhost:8080/jobrunr/dashboard`
+3. **Start the frontend:**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   The dev server starts at `http://localhost:5173`.
 
 ---
 
 ## Gmail SMTP Setup
 
-To enable email alerts, you need a Gmail **App Password** (regular passwords won't work if 2-Step Verification is enabled).
+To enable email alerts, you need a valid email account for sending notifications. For a Gmail account, you need a Gmail **App Password**.
 
 1. Go to [Google Account Security](https://myaccount.google.com/security).
 2. Make sure **2-Step Verification** is turned **ON**.
 3. Search for **"App passwords"** in the Google Account search bar (or go to [App Passwords](https://myaccount.google.com/apppasswords) directly).
 4. Click **Create a new app password**, give it a name like `Monitoring App`.
-5. Google will generate a **16-character code** — copy it.
+5. Google will generate a **16-character code** - copy it.
 6. Paste it as `MAIL_PASSWORD` in your `.env` file:
+
    ```env
    MAIL_USERNAME=your_email@gmail.com
    MAIL_PASSWORD=abcd efgh ijkl mnop
    ```
 
-> **Note:** The app password looks like `abcd efgh ijkl mnop` (with spaces). You can paste it as-is, spaces included.
-
----
-
-## Deployment
-
-### Recommended Production Setup
-
-For production, it is recommended to use **Docker Compose** to run the full stack as a single unit:
-
-| Container | Role |
-|---|---|
-| **PostgreSQL** | Database |
-| **Spring Boot** | Backend API |
-| **Nginx** | Reverse proxy — serves the built React frontend, proxies API requests to the backend, and handles SSL/TLS termination |
-
-This setup gives you:
-- **A single entry point** — Nginx routes `/api/*` to the backend and serves the frontend build for everything else.
-- **SSL/TLS support** — Terminate HTTPS at Nginx (supports both CA-signed and self-signed certificates for private networks).
-- **WebSocket proxying** — Nginx forwards STOMP connections to the backend.
-
-### Standalone (Development)
-
-For local development, run the backend with `./mvnw spring-boot:run`, the frontend with `npm run dev`, and PostgreSQL via `docker-compose up -d` (as described in Getting Started).
-
 ---
 
 ## Screenshots
-
-<!-- TODO: Add screenshots showing the following:
-  1. Frontend dashboard with real-time metrics graphs
-  2. Device list / management page
-  3. Alert thresholds configuration
-  4. Swagger UI showing the API documentation
--->
 
 ---
 
@@ -244,14 +261,14 @@ For local development, run the backend with `./mvnw spring-boot:run`, the fronte
 | GET | `/api/settings` | Get system settings |
 | PUT | `/api/settings` | Update system settings |
 
-> Full interactive API docs are available at `/swagger-ui/index.html` when the server is running.
+> Full interactive API docs are available at `/api/swagger-ui/index.html`
 
 ---
 
 ## Project Structure
 
 ```
-monitoring-system-backend/
+monitoring-system/
 ├── src/main/java/cz/jirikfi/monitoringsystembackend/
 │   ├── components/      # Specialized Spring components
 │   ├── configurations/  # Security, Cache, WebSocket, OpenAPI configs
@@ -268,7 +285,13 @@ monitoring-system-backend/
 │   └── validation/      # Custom validation annotations
 ├── src/main/resources/
 │   └── application.yml  # Application configuration
-├── docker-compose.yml   # PostgreSQL container
+├── frontend/            # React frontend (Vite + TypeScript)
+│   ├── src/             # Frontend source code
+│   ├── certs/           # SSL certificates for Nginx
+│   ├── nginx.conf       # Nginx configuration
+│   └── Dockerfile       # Frontend container build
+├── docker-compose.yml   # Full stack orchestration
+├── Dockerfile           # Backend container build
 ├── .env                 # Environment variables (not committed)
 └── uploads/             # Device image storage
 ```
